@@ -4,11 +4,13 @@ using SolarX.API.Extensions;
 using SolarX.API.Middlewares;
 using SolarX.REPOSITORY;
 using SolarX.REPOSITORY.Abstractions;
+using SolarX.SERVICE.Abstractions.IAgencyServices;
 using SolarX.SERVICE.Abstractions.IAuthServices;
 using SolarX.SERVICE.Abstractions.ICategoryServices;
 using SolarX.SERVICE.Abstractions.IJwtServices;
 using SolarX.SERVICE.Abstractions.IPasswordHasherServices;
 using SolarX.SERVICE.Abstractions.IProductServices;
+using SolarX.SERVICE.Services.AgencyServices;
 using SolarX.SERVICE.Services.AuthServices;
 using SolarX.SERVICE.Services.CategoryServices;
 using SolarX.SERVICE.Services.CloudinaryServices;
@@ -44,7 +46,8 @@ builder.Services
     .AddTransient<IPasswordHasherServices, PasswordHasherService>()
     .AddTransient<IAuthServices, AuthServices>()
     .AddTransient<ICategoryServices, CategoryServices>()
-    .AddTransient<IProductServices, ProductServices>();
+    .AddTransient<IProductServices, ProductServices>()
+    .AddTransient<IAgencyServices, AgencyServices>();
 
 
 var app = builder.Build();
