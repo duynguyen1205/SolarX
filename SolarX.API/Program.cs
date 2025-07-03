@@ -8,15 +8,19 @@ using SolarX.SERVICE.Abstractions.IAgencyServices;
 using SolarX.SERVICE.Abstractions.IAuthServices;
 using SolarX.SERVICE.Abstractions.ICategoryServices;
 using SolarX.SERVICE.Abstractions.IJwtServices;
+using SolarX.SERVICE.Abstractions.IOrderServices;
 using SolarX.SERVICE.Abstractions.IPasswordHasherServices;
 using SolarX.SERVICE.Abstractions.IProductServices;
+using SolarX.SERVICE.Abstractions.IWalletService;
 using SolarX.SERVICE.Services.AgencyServices;
 using SolarX.SERVICE.Services.AuthServices;
 using SolarX.SERVICE.Services.CategoryServices;
 using SolarX.SERVICE.Services.CloudinaryServices;
 using SolarX.SERVICE.Services.JwtServices;
+using SolarX.SERVICE.Services.OrderServices;
 using SolarX.SERVICE.Services.PasswordHasherServices;
 using SolarX.SERVICE.Services.ProductServices;
+using SolarX.SERVICE.Services.WalletService;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -47,12 +51,16 @@ builder.Services
     .AddTransient<IAuthServices, AuthServices>()
     .AddTransient<ICategoryServices, CategoryServices>()
     .AddTransient<IProductServices, ProductServices>()
-    .AddTransient<IAgencyServices, AgencyServices>();
+    .AddTransient<IAgencyServices, AgencyServices>()
+    .AddTransient<IWalletService, WalletService>()
+    .AddTransient<IOrderServices, OrderServices>();
 
 
 var app = builder.Build();
 
 app.UseMiddleware<GlobalExceptionHandlingMiddleware>();
+
+app.UseMiddleware<AgencySlugMiddleware>();
 using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();

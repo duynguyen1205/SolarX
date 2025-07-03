@@ -8,12 +8,12 @@ namespace SolarX.API.Controller
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class AgencyServices : ControllerBase
+    public class AgencyController : ControllerBase
     {
         private readonly IAgencyServices _agencyServices;
         private readonly IGlobalTransactionsBehaviors _globalTransactionsBehaviors;
 
-        public AgencyServices(IAgencyServices agencyServices, IGlobalTransactionsBehaviors globalTransactionsBehaviors)
+        public AgencyController(IAgencyServices agencyServices, IGlobalTransactionsBehaviors globalTransactionsBehaviors)
         {
             _agencyServices = agencyServices;
             _globalTransactionsBehaviors = globalTransactionsBehaviors;

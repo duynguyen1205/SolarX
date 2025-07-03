@@ -1,4 +1,5 @@
 ﻿using SolarX.REPOSITORY.Abstractions;
+using SolarX.REPOSITORY.Entity;
 using SolarX.SERVICE.Services.AgencyServices;
 using SolarX.SERVICE.Services.Base;
 
@@ -10,4 +11,5 @@ public interface IAgencyServices
     Task<Result> CreateAgency(RequestModel.CreateAgencyReq request);
     Task<Result> UpdateAgency(Guid agencyId, RequestModel.UpdateAgencyReq request);
     Task<Result> DeleteAgency(Guid agencyId);
+    Task<Agency?> GetBySlugAsync(string slug);
 }

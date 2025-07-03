@@ -13,9 +13,11 @@ public static class RequestModel
         [RegularExpression(@"^(?=.*[A-Z])(?=.*\W).+$",
             ErrorMessage = "Password must contain at least one uppercase letter and one special character.")]
         string Password,
-        [Required] [StringLength(50, MinimumLength = 3, ErrorMessage = "First Name must be between 3 and 50 characters.")]
+        [Required]
+        [StringLength(50, MinimumLength = 3, ErrorMessage = "First Name must be between 3 and 50 characters.")]
         string FirstName,
-        [Required] [StringLength(50, MinimumLength = 3, ErrorMessage = "Last Name  must be between 3 and 50 characters.")]
+        [Required]
+        [StringLength(50, MinimumLength = 3, ErrorMessage = "Last Name  must be between 3 and 50 characters.")]
         string LastName,
         [Required] Role Role,
         [Required]

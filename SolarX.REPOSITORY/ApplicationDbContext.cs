@@ -19,6 +19,8 @@ public class ApplicationDbContext : DbContext
     }
 
     public DbSet<Agency> Agencies { get; set; }
+    public DbSet<AgencyWallet> AgencyWallets { get; set; }
+    public DbSet<WalletTransaction> WalletTransactions { get; set; }
     public DbSet<BlogPost> BlogPosts { get; set; }
     public DbSet<Category> Categories { get; set; }
     public DbSet<ConsultingRequest> ConsultingRequests { get; set; }
@@ -95,6 +97,17 @@ public class ApplicationDbContext : DbContext
         modelBuilder.Entity<Product>()
             .Property(p => p.BasePrice)
             .HasPrecision(18, 2);
+
+
+        modelBuilder.Entity<AgencyWallet>(entity =>
+        {
+            entity.Property(e => e.Balance).HasPrecision(18, 2);
+            entity.Property(e => e.CreditLimit).HasPrecision(18, 2);
+            entity.Property(e => e.CurrentDebt).HasPrecision(18, 2);
+        });
+
+        modelBuilder.Entity<WalletTransaction>(entity => { entity.Property(e => e.Amount).HasPrecision(18, 2); });
+
         var agency = new Agency
         {
             Id = new Guid("44444444-4444-4444-4444-444444444444"),

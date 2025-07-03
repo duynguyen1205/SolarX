@@ -25,7 +25,9 @@ public class AuthServices : IAuthServices
 
     public async Task<Result<string>> Login(RequestModel.LoginRequest request)
     {
-        var isUserExist = await _userRepository.GetAllWithQuery(x => x.Email == request.Email).FirstOrDefaultAsync();
+        var isUserExist = await _userRepository.GetAllWithQuery(x => x.Email == request.Email)
+            .Include(x => x.Agency)
+            .FirstOrDefaultAsync();
         if (isUserExist == null)
         {
             return Result<string>.CreateResult("UserName doesn't exist", 400, "");
@@ -43,6 +45,7 @@ public class AuthServices : IAuthServices
             new("UserId", isUserExist.Id.ToString()),
             new("Role", isUserExist.Role.ToString()),
             new("Name", isUserExist.FullName),
+            new("Slug", isUserExist.Agency.Slug),
             new(ClaimTypes.Role, isUserExist.Role.ToString()),
             new(ClaimTypes.Expired,
                 TimeZoneInfo.ConvertTime(DateTimeOffset.UtcNow.AddMinutes(120), vietnamTimeZone).ToString())

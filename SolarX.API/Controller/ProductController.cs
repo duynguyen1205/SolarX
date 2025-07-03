@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using SolarX.API.Behaviors;
 using SolarX.SERVICE.Abstractions.IProductServices;

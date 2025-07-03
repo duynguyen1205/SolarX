@@ -1,5 +1,5 @@
-﻿
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Abstractions;
 using SolarX.REPOSITORY.Abstractions;
 using SolarX.REPOSITORY.Entity;
 using SolarX.SERVICE.Abstractions.IAgencyServices;
@@ -49,35 +49,40 @@ public class AgencyServices : IAgencyServices
     public async Task<Result> CreateAgency(RequestModel.CreateAgencyReq request)
     {
         var existingAgency =
-            await _agencyRepository.GetAllWithQuery(x => x.Name == request.Name && x.Slug == request.Slug)
+            await _agencyRepository.GetAllWithQuery(x => x.Slug == request.Slug)
                 .FirstOrDefaultAsync();
         var folderName = $"agency-{request.Name}";
-        if (existingAgency is { IsDeleted: true })
+        switch (existingAgency)
         {
-            await Task.WhenAll(
-                _cloudinaryService.DeleteFile(existingAgency.LogoUrl),
-                _cloudinaryService.DeleteFile(existingAgency.BannerUrl)
-            );
-
-            var uploadTasksUpdate = new[]
+            case { IsDeleted: true }:
             {
-                _cloudinaryService.UploadFileAsync(request.LogoUrl, folderName),
-                _cloudinaryService.UploadFileAsync(request.BannerUrl, folderName)
-            };
+                await Task.WhenAll(
+                    _cloudinaryService.DeleteFile(existingAgency.LogoUrl),
+                    _cloudinaryService.DeleteFile(existingAgency.BannerUrl)
+                );
 
-            await Task.WhenAll(uploadTasksUpdate);
-            existingAgency.Name = request.Name;
-            existingAgency.Slug = request.Slug;
-            existingAgency.ThemeColor = request.ThemeColor;
-            existingAgency.Hotline = request.Hotline;
-            existingAgency.MarkupPercent = request.MarkupPercent;
-            existingAgency.DisplayWithMarkup = request.DisplayWithMarkup;
-            existingAgency.IsDeleted = false;
-            existingAgency.LogoUrl = uploadTasksUpdate[0].Result;
-            existingAgency.BannerUrl = uploadTasksUpdate[1].Result;
+                var uploadTasksUpdate = new[]
+                {
+                    _cloudinaryService.UploadFileAsync(request.LogoUrl, folderName),
+                    _cloudinaryService.UploadFileAsync(request.BannerUrl, folderName)
+                };
 
-            _agencyRepository.UpdateEntity(existingAgency);
-            return Result.CreateResult("Create Agency successfully", 201);
+                await Task.WhenAll(uploadTasksUpdate);
+                existingAgency.Name = request.Name;
+                existingAgency.Slug = request.Slug;
+                existingAgency.ThemeColor = request.ThemeColor;
+                existingAgency.Hotline = request.Hotline;
+                existingAgency.MarkupPercent = request.MarkupPercent;
+                existingAgency.DisplayWithMarkup = request.DisplayWithMarkup;
+                existingAgency.IsDeleted = false;
+                existingAgency.LogoUrl = uploadTasksUpdate[0].Result;
+                existingAgency.BannerUrl = uploadTasksUpdate[1].Result;
+
+                _agencyRepository.UpdateEntity(existingAgency);
+                return Result.CreateResult("Create Agency successfully", 201);
+            }
+            case { IsDeleted: false }:
+                return Result.CreateResult("Agency Slug all ready exist", 400);
         }
 
 
@@ -182,5 +187,14 @@ public class AgencyServices : IAgencyServices
 
         _agencyRepository.RemoveEntity(agencyExisting);
         return Result.CreateResult("Delete agency successfully", 200);
+    }
+
+    public async Task<Agency?> GetBySlugAsync(string slug)
+    {
+        var agency = await _agencyRepository.GetAllWithQuery(x => x.Slug == slug && !x.IsDeleted).FirstOrDefaultAsync();
+        if (agency == null)
+            throw new Exception($"Not found Agency \"{slug}\".");
+        return agency;
+
     }
 }
