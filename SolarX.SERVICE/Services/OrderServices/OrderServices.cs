@@ -91,7 +91,7 @@ public class OrderServices : IOrderServices
                 OrderId = orderId,
                 ProductId = item.ProductId,
                 Quantity = item.Quantity,
-                UnitPrice = product.BasePrice + product.BasePrice * (decimal)percent
+                UnitPrice = product.BasePrice * (decimal)(1 + percent / 100)
             });
         }
 
@@ -134,46 +134,37 @@ public class OrderServices : IOrderServices
 
     private async Task<Result<bool>> ValidateInventoryAsync(Guid agencyId, List<RequestModel.CreateOrderItemDto> items)
     {
+        var productIds = items.Select(i => i.ProductId).ToList();
+        var inventories = await _inventoryRepository
+            .GetAllWithQuery(i => i.AgencyId == agencyId && productIds.Contains(i.ProductId))
+            .ToListAsync();
+
+        var inventoryDict = inventories.ToDictionary(i => i.ProductId);
+
         foreach (var item in items)
         {
-            var inventory = await _inventoryRepository
-                .GetAllWithQuery(i => i.AgencyId == agencyId && i.ProductId == item.ProductId)
-                .FirstOrDefaultAsync();
-
-            if (inventory == null)
+            if (!inventoryDict.TryGetValue(item.ProductId, out var inventory))
             {
                 return Result<bool>.CreateResult($"Product {item.ProductId} not available in agency inventory", 400, false);
             }
 
-            // Kiểm tra số lượng yêu cầu phải > 0
             if (item.Quantity <= 0)
             {
-                return Result<bool>.CreateResult($"Invalid quantity for product {item.ProductId}. Quantity must be greater than 0",
-                    400, false);
+                return Result<bool>.CreateResult($"Invalid quantity for product {item.ProductId}. Quantity must be greater than 0", 400,
+                    false);
             }
 
-            // Kiểm tra tồn kho hiện tại phải >= 0
             if (inventory.Quantity < 0)
             {
                 return Result<bool>.CreateResult(
-                    $"Invalid inventory quantity for product {item.ProductId}. Current inventory is negative",
-                    400, false);
+                    $"Invalid inventory quantity for product {item.ProductId}. Current inventory is negative", 400, false);
             }
 
-            // Kiểm tra sau khi trừ, tồn kho không được âm
             if (inventory.Quantity < item.Quantity)
             {
                 return Result<bool>.CreateResult(
                     $"Insufficient inventory for product {item.ProductId}. Available: {inventory.Quantity}, Required: {item.Quantity}",
                     400, false);
-            }
-
-
-            var remainingQuantity = inventory.Quantity - item.Quantity;
-            if (remainingQuantity < 0)
-            {
-                return Result<bool>.CreateResult(
-                    $"Cannot process order. Product {item.ProductId} would have negative inventory after processing", 400, false);
             }
         }
 
@@ -182,13 +173,18 @@ public class OrderServices : IOrderServices
 
     private async Task<Result<bool>> UpdateInventoryAsync(Guid agencyId, List<RequestModel.CreateOrderItemDto> items)
     {
+        var productIds = items.Select(i => i.ProductId).ToList();
+        var inventories = await _inventoryRepository
+            .GetAllWithQuery(i => i.AgencyId == agencyId && productIds.Contains(i.ProductId))
+            .ToListAsync();
+
+        var inventoryDict = inventories.ToDictionary(i => i.ProductId);
+
         foreach (var item in items)
         {
-            var inventory = await _inventoryRepository
-                .GetAllWithQuery(i => i.AgencyId == agencyId && i.ProductId == item.ProductId)
-                .FirstOrDefaultAsync();
+            if (!inventoryDict.TryGetValue(item.ProductId, out var inventory))
+                continue;
 
-            if (inventory == null) continue;
             if (inventory.Quantity < item.Quantity)
             {
                 return Result<bool>.CreateResult(
@@ -197,10 +193,10 @@ public class OrderServices : IOrderServices
             }
 
             inventory.Quantity -= item.Quantity;
-
             _inventoryRepository.UpdateEntity(inventory);
         }
 
         return Result<bool>.CreateResult("Inventory updated successfully", 200, true);
     }
+
 }
