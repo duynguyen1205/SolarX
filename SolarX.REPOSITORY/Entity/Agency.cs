@@ -14,12 +14,15 @@ public class Agency : BaseEntity<Guid>, IAuditableEntity
     public float MarkupPercent { get; set; }
     public bool DisplayWithMarkup { get; set; }
 
+    public AgencyWallet? DefaultWallet { get; set; }
+
     public ICollection<User> Users { get; set; } = new List<User>();
     public ICollection<Order> OrdersAsBuyer { get; set; } = new List<Order>();
     public ICollection<Order> OrdersAsSeller { get; set; } = new List<Order>();
     public ICollection<ConsultingRequest> ConsultingRequests { get; set; } = new List<ConsultingRequest>();
     public ICollection<BlogPost> BlogPosts { get; set; } = new List<BlogPost>();
     public ICollection<Setting> Settings { get; set; } = new List<Setting>();
+    public ICollection<Inventory> Inventories { get; set; } = new List<Inventory>();
 
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset UpdateAt { get; set; }

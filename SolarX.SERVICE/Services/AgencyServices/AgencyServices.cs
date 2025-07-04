@@ -11,12 +11,17 @@ namespace SolarX.SERVICE.Services.AgencyServices;
 public class AgencyServices : IAgencyServices
 {
     private readonly IBaseRepository<Agency, Guid> _agencyRepository;
+    private readonly IBaseRepository<AgencyWallet, Guid> _agencyWalletRepository;
+    private readonly IBaseRepository<Inventory, Guid> _inventoryRepository;
     private readonly ICloudinaryService _cloudinaryService;
 
-    public AgencyServices(IBaseRepository<Agency, Guid> agencyRepository, ICloudinaryService cloudinaryService)
+    public AgencyServices(IBaseRepository<Agency, Guid> agencyRepository, ICloudinaryService cloudinaryService,
+        IBaseRepository<AgencyWallet, Guid> agencyWalletRepository, IBaseRepository<Inventory, Guid> inventoryRepository)
     {
         _agencyRepository = agencyRepository;
         _cloudinaryService = cloudinaryService;
+        _agencyWalletRepository = agencyWalletRepository;
+        _inventoryRepository = inventoryRepository;
     }
 
     public async Task<Result<PagedResult<ResponseModel.AgencyResponseModel>>> GetAllAgencies(string? searchTerm, int pageIndex,
@@ -108,6 +113,17 @@ public class AgencyServices : IAgencyServices
         };
 
         _agencyRepository.AddEntity(newAgency);
+
+        var agencyWaller = new AgencyWallet
+        {
+            Id = Guid.NewGuid(),
+            AgencyId = newAgency.Id,
+            CreditLimit = request.CreditLimit,
+            CurrentDebt = 0,
+            Balance = 0
+        };
+        _agencyWalletRepository.AddEntity(agencyWaller);
+
         return Result.CreateResult("Create Agency successfully", 201);
     }
 

@@ -26,8 +26,12 @@ public static class RequestModel
         [Range(0.01, double.MaxValue, ErrorMessage = "Markup Percent must be greater than 0")]
         float MarkupPercent,
         [Required]
-        bool DisplayWithMarkup
+        bool DisplayWithMarkup,
+        [Required]
+        [Range(0.01, double.MaxValue, ErrorMessage = "Markup Percent must be greater than 0")]
+        decimal CreditLimit
     );
+
 
     public record UpdateAgencyReq(
         [StringLength(50, MinimumLength = 3, ErrorMessage = "Agency name must be between 3 and 50 characters.")]
