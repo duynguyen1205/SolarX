@@ -35,8 +35,9 @@ public class AgencySlugMiddleware
             var agency = await agencyService.GetBySlugAsync(slug);
             if (agency != null)
             {
-                context.Items["Agency"] = agency;
+                context.Items["MarkUpPercent"] = agency.MarkupPercent;
                 context.Items["AgencyId"] = agency.Id;
+                context.Items["MarkUp"] = agency.DisplayWithMarkup;
             }
         }
 

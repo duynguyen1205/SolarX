@@ -33,13 +33,64 @@ public class CategoryServices : ICategoryServices
             x.Name,
             x.Products.Select(y => new ResponseModel.ProductViewModel(
                 y.Id,
-                y.Name
+                y.Name,
+                null
             )).ToList()
         )).ToList();
 
         var result = new PagedResult<ResponseModel.CategoryResponseModel>(response, listResult.PageIndex, listResult.PageSize,
             listResult.TotalCount);
         return Result<PagedResult<ResponseModel.CategoryResponseModel>>.CreateResult("Get categories success", 200, result);
+    }
+
+    public async Task<Result<PagedResult<ResponseModel.CategoryResponseModel>>> GetCategoriesDetail(Guid categoryId, bool isMarkUp,
+        decimal markupPercent,
+        string? searchTerm,
+        int pageIndex, int pageSize)
+    {
+        var categoryExist = await _categoryRepository.GetAllWithQuery(x => x.Id == categoryId && !x.IsDeleted)
+            .Include(x => x.Products.Where(z => z.IsActive && !z.IsDeleted))
+            .FirstOrDefaultAsync();
+
+        if (categoryExist == null)
+        {
+            return Result<PagedResult<ResponseModel.CategoryResponseModel>>.CreateResult("Category not found", 404, null!);
+        }
+
+        var query = _categoryRepository.GetAllWithQuery(x => x.Id == categoryId && !x.IsDeleted);
+        query = query.Include(x => x.Products.Where(z => z.IsActive && !z.IsDeleted));
+
+        if (!string.IsNullOrEmpty(searchTerm))
+        {
+            query = query.Where(x => x.Name.Contains(searchTerm) ||
+                                     x.Products.Any(p => p.Name.Contains(searchTerm)));
+        }
+
+        var listResult = await PagedResult<Category>.CreateAsync(query, pageIndex, pageSize);
+
+        var response = listResult.Items.Select(x => new ResponseModel.CategoryResponseModel(
+            x.Id,
+            x.Name,
+            x.Products.Select(y => new ResponseModel.ProductViewModel(
+                y.Id,
+                y.Name,
+                CalculateProductPrice(y.BasePrice, isMarkUp, markupPercent)
+            )).ToList()
+        )).ToList();
+
+        var result = new PagedResult<ResponseModel.CategoryResponseModel>(response, listResult.PageIndex, listResult.PageSize,
+            listResult.TotalCount);
+        return Result<PagedResult<ResponseModel.CategoryResponseModel>>.CreateResult("Get categories detail success", 200, result);
+    }
+
+    private static decimal CalculateProductPrice(decimal basePrice, bool isMarkUp, decimal markupPercent)
+    {
+        if (isMarkUp && markupPercent > 0)
+        {
+            return basePrice + (basePrice * markupPercent / 100);
+        }
+
+        return basePrice;
     }
 
     public async Task<Result> CreateCategory(RequestModel.CreateCategoryReq req)
@@ -51,6 +102,9 @@ public class CategoryServices : ICategoryServices
             if (categoryExist.IsDeleted)
             {
                 categoryExist.IsDeleted = false;
+                _categoryRepository.UpdateEntity(categoryExist);
+                return Result.CreateResult("Category restored successfully", 201);
+
             }
             else
             {
@@ -66,7 +120,7 @@ public class CategoryServices : ICategoryServices
 
         _categoryRepository.AddEntity(newCategory);
 
-        return Result.CreateResult("Create category success", 200, "OK");
+        return Result.CreateResult("Create category success", 201);
     }
 
     public async Task<Result> UpdateCategory(Guid cateogryId, RequestModel.CreateCategoryReq req)

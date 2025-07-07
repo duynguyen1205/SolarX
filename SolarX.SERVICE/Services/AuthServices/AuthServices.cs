@@ -2,6 +2,7 @@ using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
 using SolarX.REPOSITORY.Abstractions;
 using SolarX.REPOSITORY.Entity;
+using SolarX.REPOSITORY.Enum;
 using SolarX.SERVICE.Abstractions.IAuthServices;
 using SolarX.SERVICE.Abstractions.IJwtServices;
 using SolarX.SERVICE.Abstractions.IPasswordHasherServices;
@@ -46,6 +47,7 @@ public class AuthServices : IAuthServices
             new("Role", isUserExist.Role.ToString()),
             new("Name", isUserExist.FullName),
             new("Slug", isUserExist.Agency.Slug),
+            new("AgencyId", isUserExist.AgencyId.ToString()),
             new(ClaimTypes.Role, isUserExist.Role.ToString()),
             new(ClaimTypes.Expired,
                 TimeZoneInfo.ConvertTime(DateTimeOffset.UtcNow.AddMinutes(120), vietnamTimeZone).ToString())
@@ -73,8 +75,9 @@ public class AuthServices : IAuthServices
             isUserExist.PhoneNumber = request.PhoneNumber;
             isUserExist.FullName = request.FirstName;
             isUserExist.Password = hashPassword;
-            isUserExist.Role = request.Role;
+            isUserExist.Role = Role.AgencyAdmin;
             isUserExist.IsDeleted = false;
+            isUserExist.AgencyId = request.AgencyId;
 
             _userRepository.UpdateEntity(isUserExist);
             return Result.CreateResult("Account recreated successfully", 201);
@@ -86,10 +89,12 @@ public class AuthServices : IAuthServices
         {
             Id = Guid.NewGuid(),
             Email = request.Email,
+            UserName = request.Email,
             PhoneNumber = request.PhoneNumber,
             FullName = request.LastName,
             Password = newHashPassword,
-            Role = request.Role
+            Role = Role.AgencyAdmin,
+            AgencyId = request.AgencyId
         };
         _userRepository.AddEntity(newUser);
         return Result.CreateResult("Create user successfully", 201);

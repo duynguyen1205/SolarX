@@ -13,15 +13,13 @@ public class InventoryTransaction : BaseEntity<Guid>, IAuditableEntity
 
     public Guid InventoryId { get; set; }
     public Inventory Inventory { get; set; }
-    
+
+    public Guid? OrderId { get; set; }
+    public Order? Order { get; set; }
     public int QuantityChanged { get; set; } // +10 nếu nhập, -5 nếu xuất
     public InventoryTransactionType Type { get; set; } // Nhập, Xuất, Điều chỉnh, Trả hàng
+    public string? Note { get; set; }
 
-    public string ReferenceCode { get; set; } // Mã liên quan (VD: mã đơn hàng)
-    public string Note { get; set; }
-
-    public Guid CreatedById { get; set; }
-    public User CreatedBy { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset UpdateAt { get; set; }
 }

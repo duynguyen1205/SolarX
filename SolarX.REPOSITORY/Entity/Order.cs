@@ -23,6 +23,7 @@ public class Order : BaseEntity<Guid>, IAuditableEntity
 
     public Payment? Payment { get; set; }
     public ICollection<OrderItem> Items { get; set; } = new List<OrderItem>();
+    public ICollection<InventoryTransaction> InventoryTransactions { get; set; } = new List<InventoryTransaction>();
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset UpdateAt { get; set; }
 }

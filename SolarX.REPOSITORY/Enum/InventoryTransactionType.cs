@@ -2,9 +2,10 @@
 
 public enum InventoryTransactionType
 {
-    ImportFromSupplier = 0,   // Nhập từ NCC
-    ExportToBranch = 1,       // Xuất cho chi nhánh (B2B)
-    SellToCustomer = 2,       // Bán cho khách (B2C)
-    ReturnFromBranch = 3,     // Chi nhánh trả lại hàng
-    Adjustment = 4            // Điều chỉnh tồn kho thủ công
+    ImportForInventory = 0,
+    ImportFromSupplier = 1,   // Nhập từ NCC
+    ExportToBranch = 2,       // Xuất cho chi nhánh (B2B)
+    SellToCustomer = 3,       // Bán cho khách (B2C)
+    ReturnFromBranch = 4,     // Chi nhánh trả lại hàng
+    Adjustment = 5            // Điều chỉnh tồn kho thủ công
 }

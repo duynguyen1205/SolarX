@@ -8,6 +8,12 @@ namespace SolarX.SERVICE.Abstractions.ICategoryServices;
 public interface ICategoryServices
 {
     Task<Result<PagedResult<ResponseModel.CategoryResponseModel>>> GetCategories(string? searchTerm, int pageIndex, int pageSize);
+
+    Task<Result<PagedResult<ResponseModel.CategoryResponseModel>>> GetCategoriesDetail(Guid categoryId, bool isMarkUp,
+        decimal markupPercent,
+        string? searchTerm,
+        int pageIndex, int pageSize);
+
     public Task<Result> CreateCategory(RequestModel.CreateCategoryReq req);
     public Task<Result> UpdateCategory(Guid id, RequestModel.CreateCategoryReq req);
     public Task<Result> DeleteCategory(Guid id);

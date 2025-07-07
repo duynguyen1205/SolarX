@@ -1,3 +1,5 @@
+using CloudinaryDotNet.Actions;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SolarX.API.Behaviors;
 using SolarX.SERVICE.Abstractions.IAuthServices;
@@ -26,7 +28,8 @@ namespace SolarX.API.Controller
         }
 
         [HttpPost("register")]
-        public async Task<IActionResult> RegisterByAdmin(RequestModel.RegisterRequest request)
+        [Authorize(Roles = "SystemAdmin")]
+        public async Task<IActionResult> RegisterByAdmin( RequestModel.RegisterRequest request)
         {
             var result = await _globalTransactionsBehaviors.ExecuteInTransactionAsync(async () =>
                 await _authServices.AdminCreateAccount(request)

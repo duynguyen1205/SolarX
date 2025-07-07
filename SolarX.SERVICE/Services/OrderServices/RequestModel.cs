@@ -6,10 +6,6 @@ namespace SolarX.SERVICE.Services.OrderServices;
 public static class RequestModel
 {
     public record CreateOrderReq(
-        Guid SellerAgencyId,
-        Guid? CustomerId,
-        Guid? BuyerAgencyId,
-        bool IsB2C,
         List<CreateOrderItemDto> OrderItems,
         PaymentMethod PaymentMethod
     );

@@ -26,6 +26,23 @@ namespace SolarX.API.Controller
             return StatusCode(result.StatusCode, result);
         }
 
+        [HttpGet("{categoryId:guid}")]
+        public async Task<IActionResult> GetCategoryDetail(Guid categoryId, string? searchTerm, int? pageIndex = 1, int? pageSize = 10)
+        {
+            var isMarkUp = (bool)HttpContext.Items["MarkUp"]!;
+            decimal markUp = 0;
+            if (isMarkUp)
+            {
+                var markUpValue = HttpContext.Items["MarkUpPercent"]!;
+                markUp = Convert.ToDecimal(markUpValue);
+
+            }
+
+            var result = await _categoryServices.GetCategoriesDetail(categoryId, isMarkUp, markUp, searchTerm, (int)pageIndex!,
+                (int)pageSize!);
+            return StatusCode(result.StatusCode, result);
+        }
+
         [HttpPost]
         [Authorize(Roles = "SystemAdmin")]
         public async Task<IActionResult> CreateCategory(RequestModel.CreateCategoryReq request)

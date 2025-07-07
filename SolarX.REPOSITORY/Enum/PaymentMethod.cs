@@ -5,5 +5,5 @@ public enum PaymentMethod
     Cash,
     Sepay,
     Wallet,
-    Credit,
+    Credit
 }

@@ -7,6 +7,7 @@ using SolarX.REPOSITORY.Abstractions;
 using SolarX.SERVICE.Abstractions.IAgencyServices;
 using SolarX.SERVICE.Abstractions.IAuthServices;
 using SolarX.SERVICE.Abstractions.ICategoryServices;
+using SolarX.SERVICE.Abstractions.IInventoryServices;
 using SolarX.SERVICE.Abstractions.IJwtServices;
 using SolarX.SERVICE.Abstractions.IOrderServices;
 using SolarX.SERVICE.Abstractions.IPasswordHasherServices;
@@ -16,6 +17,7 @@ using SolarX.SERVICE.Services.AgencyServices;
 using SolarX.SERVICE.Services.AuthServices;
 using SolarX.SERVICE.Services.CategoryServices;
 using SolarX.SERVICE.Services.CloudinaryServices;
+using SolarX.SERVICE.Services.InventoryServices;
 using SolarX.SERVICE.Services.JwtServices;
 using SolarX.SERVICE.Services.OrderServices;
 using SolarX.SERVICE.Services.PasswordHasherServices;
@@ -53,7 +55,8 @@ builder.Services
     .AddTransient<IProductServices, ProductServices>()
     .AddTransient<IAgencyServices, AgencyServices>()
     .AddTransient<IWalletService, WalletService>()
-    .AddTransient<IOrderServices, OrderServices>();
+    .AddTransient<IOrderServices, OrderServices>()
+    .AddTransient<IInventoryServices, InventoryServices>();
 
 
 var app = builder.Build();

@@ -1,6 +1,8 @@
 ﻿namespace SolarX.SERVICE.Services.OrderServices;
 
-public class ResponseModel
+public static class ResponseModel
 {
-    
+    public record OrderResponseModel(Guid OrderId, string OrderCode, string OrderStatus, DateTimeOffset OrderDate, decimal OrderTotal);
+
+    public record OrderItemResponseModel(Guid ProductId, string ProductName, decimal ProductPrice, int Quantity);
 }

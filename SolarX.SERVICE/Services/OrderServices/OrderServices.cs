@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System.Xml;
+using Microsoft.EntityFrameworkCore;
 using SolarX.REPOSITORY.Abstractions;
 using SolarX.REPOSITORY.Entity;
 using SolarX.REPOSITORY.Enum;
@@ -10,16 +11,21 @@ namespace SolarX.SERVICE.Services.OrderServices;
 public class OrderServices : IOrderServices
 {
     private readonly IBaseRepository<Order, Guid> _orderRepository;
+    private readonly IBaseRepository<AgencyWallet, Guid> _agencyWalletRepository;
     private readonly IBaseRepository<OrderItem, Guid> _orderItemRepository;
     private readonly IBaseRepository<Inventory, Guid> _inventoryRepository;
+    private readonly IBaseRepository<InventoryTransaction, Guid> _inventoryTransactionRepository;
     private readonly IBaseRepository<Payment, Guid> _paymentRepository;
     private readonly IBaseRepository<Product, Guid> _productRepository;
     private readonly IBaseRepository<Agency, Guid> _agencyRepository;
+    private readonly IBaseRepository<Customer, Guid> _customerRepository;
 
     public OrderServices(IBaseRepository<Order, Guid> orderRepository,
         IBaseRepository<Inventory, Guid> inventoryRepository,
         IBaseRepository<Payment, Guid> paymentRepository, IBaseRepository<Product, Guid> productRepository,
-        IBaseRepository<OrderItem, Guid> orderItemRepository, IBaseRepository<Agency, Guid> agencyRepository)
+        IBaseRepository<OrderItem, Guid> orderItemRepository, IBaseRepository<Agency, Guid> agencyRepository,
+        IBaseRepository<AgencyWallet, Guid> agencyWalletRepository,
+        IBaseRepository<InventoryTransaction, Guid> inventoryTransactionRepository, IBaseRepository<Customer, Guid> customerRepository)
     {
         _orderRepository = orderRepository;
         _inventoryRepository = inventoryRepository;
@@ -27,23 +33,169 @@ public class OrderServices : IOrderServices
         _productRepository = productRepository;
         _orderItemRepository = orderItemRepository;
         _agencyRepository = agencyRepository;
+        _agencyWalletRepository = agencyWalletRepository;
+        _inventoryTransactionRepository = inventoryTransactionRepository;
+        _customerRepository = customerRepository;
     }
 
-    public Task<Result> CreateOrder(RequestModel.CreateOrderReq request)
+    public async Task<Result> CreateB2BOrder(Guid sellerAgencyId, Guid buyerAgencyId, RequestModel.CreateOrderReq request)
     {
-        if (request.IsB2C)
+        var orderId = Guid.NewGuid();
+        var orderCode = $"B2B-{DateTime.UtcNow:yyyyMMdd}-{orderId.ToString()[..8].ToUpper()}";
+
+        var productIds = request.OrderItems.Select(i => i.ProductId).Distinct().ToList();
+        var products = await _productRepository.GetAllWithQuery(p => productIds.Contains(p.Id)).ToDictionaryAsync(p => p.Id);
+        if (products.Count != request.OrderItems.Count)
+            return Result.CreateResult("Some products not found", 400);
+
+        var sellerAgency = await _agencyRepository.GetAllWithQuery(a => a.Id == sellerAgencyId && !a.IsDeleted).FirstOrDefaultAsync();
+        if (sellerAgency == null)
+            return Result.CreateResult("Seller agency not found", 400);
+
+        var buyerAgency = await _agencyRepository.GetAllWithQuery(a => a.Id == buyerAgencyId && !a.IsDeleted)
+            .Include(x => x.DefaultWallet)
+            .FirstOrDefaultAsync();
+        if (buyerAgency == null)
+            return Result.CreateResult("Buyer agency not found", 400);
+
+        var inventoryCheck = await ValidateInventoryAsync(sellerAgencyId, request.OrderItems);
+        if (!inventoryCheck.Data)
+            return Result.CreateResult(inventoryCheck.Message, 400);
+
+        var (orderItems, totalAmount) = GenerateOrderItems(orderId, request.OrderItems, products);
+
+        if (request.PaymentMethod == PaymentMethod.Credit)
         {
-            //check 
+            var agencyWallet = buyerAgency.DefaultWallet!;
+            if (agencyWallet.CreditLimit < totalAmount)
+                return Result.CreateResult("Credit Limit", 400);
+
+            agencyWallet.CurrentDebt += totalAmount;
+            _agencyWalletRepository.UpdateEntity(agencyWallet);
         }
 
-        throw new NotImplementedException();
+        var order = new Order
+        {
+            Id = orderId,
+            SellerAgencyId = sellerAgencyId,
+            BuyerAgencyId = buyerAgencyId,
+            IsB2C = false,
+            OrderCode = orderCode,
+            TotalAmount = totalAmount,
+            Status = PaymentStatus.Paid
+        };
+
+        var payment = new Payment
+        {
+            Id = Guid.NewGuid(),
+            OrderId = orderId,
+            Amount = totalAmount,
+            PaidAt = DateTimeOffset.UtcNow,
+            Method = request.PaymentMethod
+        };
+
+        var sellerResult = await UpdateInventoryAsync(sellerAgencyId, request.OrderItems, orderId, orderCode);
+        if (!sellerResult.Data)
+            return Result.CreateResult(sellerResult.Message, 400);
+
+        await UpdateInventoryAsync(buyerAgencyId, request.OrderItems, orderId, orderCode, false);
+
+        _orderRepository.AddEntity(order);
+        _orderItemRepository.AddBulkAsync(orderItems);
+        _paymentRepository.AddEntity(payment);
+
+        return Result.CreateResult($"Order created successfully with ID: {orderCode}", 200);
     }
+
+    private static (List<OrderItem> items, decimal totalAmount) GenerateOrderItems(Guid orderId,
+        List<RequestModel.CreateOrderItemDto> inputItems, Dictionary<Guid, Product> productDict)
+    {
+        decimal total = 0;
+        var result = inputItems.Select(i =>
+        {
+            var price = productDict[i.ProductId].BasePrice;
+            total += price * i.Quantity;
+            return new OrderItem
+            {
+                Id = Guid.NewGuid(),
+                OrderId = orderId,
+                ProductId = i.ProductId,
+                Quantity = i.Quantity,
+                UnitPrice = price
+            };
+        }).ToList();
+
+        return (result, total);
+    }
+
+    private async Task<Result<bool>> UpdateInventoryAsync(Guid agencyId, List<RequestModel.CreateOrderItemDto> items, Guid orderId,
+        string orderCode, bool isSeller = true)
+    {
+        var productIds = items.Select(i => i.ProductId).Distinct().ToList();
+        var inventories = await _inventoryRepository.GetAllWithQuery(i => i.AgencyId == agencyId && productIds.Contains(i.ProductId))
+            .ToDictionaryAsync(i => i.ProductId);
+
+        var transactions = new List<InventoryTransaction>();
+
+        foreach (var item in items)
+        {
+            var exists = inventories.TryGetValue(item.ProductId, out var inventory);
+
+            if (isSeller)
+            {
+                if (!exists || inventory!.Quantity < item.Quantity)
+                    return Result<bool>.CreateResult($"Insufficient inventory for product {item.ProductId}", 400, false);
+
+                inventory.Quantity -= item.Quantity;
+                _inventoryRepository.UpdateEntity(inventory);
+            }
+            else
+            {
+                if (exists)
+                {
+                    inventory!.Quantity += item.Quantity;
+                    _inventoryRepository.UpdateEntity(inventory);
+                }
+                else
+                {
+                    inventory = new Inventory
+                    {
+                        Id = Guid.NewGuid(),
+                        AgencyId = agencyId,
+                        ProductId = item.ProductId,
+                        Quantity = item.Quantity
+                    };
+                    _inventoryRepository.AddEntity(inventory);
+                }
+            }
+
+            transactions.Add(new InventoryTransaction
+            {
+                Id = Guid.NewGuid(),
+                AgencyId = agencyId,
+                ProductId = item.ProductId,
+                InventoryId = inventory.Id,
+                Type = isSeller ? InventoryTransactionType.ExportToBranch : InventoryTransactionType.ImportFromSupplier,
+                QuantityChanged = isSeller ? -item.Quantity : +item.Quantity,
+                OrderId = orderId,
+                Note = isSeller
+                    ? $"B2B Sale - Order {orderCode} - Exported {item.Quantity} units"
+                    : $"B2B Purchase - Order {orderCode} - Imported {item.Quantity} units"
+            });
+        }
+
+        if (transactions.Count > 0)
+            _inventoryTransactionRepository.AddBulkAsync(transactions);
+
+        return Result<bool>.CreateResult("Inventory updated successfully", 200, true);
+    }
+
 
     public async Task<Result> CreateB2COrder(Guid agencyId, RequestModel.PublicOrderRequest request)
     {
         // 1. Tạo orderId mới
         var orderId = Guid.NewGuid();
-        var orderCode = $"B2C-{DateTime.UtcNow:yyyyMMdd}-{orderId.ToString().Substring(0, 8).ToUpper()}";
+        var orderCode = $"B2C-{DateTime.UtcNow:yyyyMMdd}-{orderId.ToString()[..8].ToUpper()}";
 
         // 2. Validate products exist
         var products = await _productRepository.GetAllWithQuery(p => request.Items.Select(i => i.ProductId).Contains(p.Id))
@@ -58,7 +210,7 @@ public class OrderServices : IOrderServices
         var agencyExisting = await _agencyRepository.GetAllWithQuery(a => a.Id == agencyId && !a.IsDeleted).FirstOrDefaultAsync();
         if (agencyExisting == null)
         {
-            return Result.CreateResult("Agency not found", 400);
+            return Result.CreateResult("Agency not found ", 400);
         }
 
         float percent = 0;
@@ -68,11 +220,35 @@ public class OrderServices : IOrderServices
             percent = agencyExisting.MarkupPercent;
         }
 
-        // 3. Kiểm tra số lượng tồn kho theo kho của agency
+        // 3. Kiểm tra số  tồn kho theo kho của agency
         var inventoryValidation = await ValidateInventoryAsync(agencyId, request.Items);
         if (!inventoryValidation.Data)
         {
             return Result.CreateResult(inventoryValidation.Message, 400);
+        }
+
+        Customer customer = null!;
+        var customerExist = await _customerRepository.GetAllWithQuery(x => x.Email == request.Email).FirstOrDefaultAsync();
+        if (customerExist != null)
+        {
+            if (customerExist.IsDeleted)
+            {
+                customerExist.IsDeleted = false;
+                _customerRepository.UpdateEntity(customerExist);
+                customer = customerExist;
+            }
+        }
+        else
+        {
+            customer = new Customer
+            {
+                Email = request.Email,
+                FullName = request.FullName,
+                PhoneNumber = request.PhoneNumber,
+                Address = request.Address,
+                IsDeleted = false
+            };
+            _customerRepository.AddEntity(customer);
         }
 
         // 4. Tính toán tổng tiền
@@ -101,8 +277,10 @@ public class OrderServices : IOrderServices
         {
             Id = orderId,
             SellerAgencyId = agencyId,
+            CustomerId = customer.Id,
             IsB2C = true,
             OrderCode = orderCode,
+            OrderStatus = OrderStatus.Pending,
             TotalAmount = totalAmount
         };
 
@@ -117,7 +295,7 @@ public class OrderServices : IOrderServices
         };
 
         // 7. Trừ tồn kho
-        var inventoryUpdateResult = await UpdateInventoryAsync(agencyId, request.Items);
+        var inventoryUpdateResult = await UpdateInventoryAsync(agencyId, request.Items, order.Id);
         if (!inventoryUpdateResult.Data)
         {
             return Result.CreateResult(inventoryUpdateResult.Message, 400);
@@ -130,6 +308,68 @@ public class OrderServices : IOrderServices
 
         return Result.CreateResult($"Order created successfully with ID: {orderCode}", 200);
 
+    }
+
+    public async Task<Result<PagedResult<ResponseModel.OrderResponseModel>>> GetAllOrder(Guid agencyId, string? searchTerm,
+        DateTimeOffset? dateOrder, OrderStatus? status, bool seller,
+        int pageIndex, int pageSize)
+    {
+
+        var query = seller
+            ? _orderRepository.GetAllWithQuery(x => x.SellerAgencyId == agencyId && x.IsB2C)
+            : _orderRepository.GetAllWithQuery(x => x.BuyerAgencyId == agencyId && !x.IsB2C);
+
+        query = query.Include(x => x.Items);
+        if (!string.IsNullOrEmpty(searchTerm))
+        {
+            query = query.Where(x => x.OrderCode.Contains(searchTerm));
+        }
+
+        if (dateOrder != null)
+        {
+            query = query.Where(x => x.CreatedAt.Date == dateOrder.Value.Date);
+        }
+
+        if (status != null)
+        {
+            query = query.Where(x => x.OrderStatus == status);
+        }
+
+
+        var resultList = await PagedResult<Order>.CreateAsync(query, pageIndex, pageSize);
+        var result = resultList.Items.Select(x => new ResponseModel.OrderResponseModel(
+            x.Id,
+            x.OrderCode,
+            x.OrderStatus.ToString(),
+            x.CreatedAt,
+            x.TotalAmount
+        )).ToList();
+
+        var response =
+            new PagedResult<ResponseModel.OrderResponseModel>(result, resultList.PageIndex, resultList.PageSize, resultList.TotalCount);
+        return Result<PagedResult<ResponseModel.OrderResponseModel>>.CreateResult("Get All Order", 200, response);
+    }
+
+    public async Task<Result<List<ResponseModel.OrderItemResponseModel?>>> GetOrderDetail(Guid orderId)
+    {
+        var orderExisting = await _orderRepository.GetAllWithQuery(x => x.Id == orderId && !x.IsDeleted)
+            .Include(x => x.Items)
+            .ThenInclude(x => x.Product)
+            .FirstOrDefaultAsync();
+        
+        if (orderExisting == null)
+        {
+            return Result<List<ResponseModel.OrderItemResponseModel?>>.CreateResult("Bad request", 400, null!);
+        }
+
+        var order = orderExisting.Items.Select(x => new ResponseModel.OrderItemResponseModel(
+            x.ProductId,
+            x.Product.Name,
+            x.UnitPrice,
+            x.Quantity
+        )).ToList();
+
+        return Result<List<ResponseModel.OrderItemResponseModel?>>.CreateResult("Get order detail", 200, order!);
     }
 
     private async Task<Result<bool>> ValidateInventoryAsync(Guid agencyId, List<RequestModel.CreateOrderItemDto> items)
@@ -171,7 +411,7 @@ public class OrderServices : IOrderServices
         return Result<bool>.CreateResult("Inventory validation passed", 200, true);
     }
 
-    private async Task<Result<bool>> UpdateInventoryAsync(Guid agencyId, List<RequestModel.CreateOrderItemDto> items)
+    private async Task<Result<bool>> UpdateInventoryAsync(Guid agencyId, List<RequestModel.CreateOrderItemDto> items, Guid orderId)
     {
         var productIds = items.Select(i => i.ProductId).ToList();
         var inventories = await _inventoryRepository
@@ -179,6 +419,7 @@ public class OrderServices : IOrderServices
             .ToListAsync();
 
         var inventoryDict = inventories.ToDictionary(i => i.ProductId);
+        var transactionsToAdd = new List<InventoryTransaction>(); // Thêm list để lưu transactions
 
         foreach (var item in items)
         {
@@ -194,6 +435,24 @@ public class OrderServices : IOrderServices
 
             inventory.Quantity -= item.Quantity;
             _inventoryRepository.UpdateEntity(inventory);
+
+            var transaction = new InventoryTransaction
+            {
+                Id = Guid.NewGuid(),
+                AgencyId = agencyId,
+                ProductId = item.ProductId,
+                InventoryId = inventory.Id, // Sửa từ existingInventory thành inventory
+                Type = InventoryTransactionType.SellToCustomer,
+                QuantityChanged = -item.Quantity,
+                OrderId = orderId,
+                Note = $"B2C Order - Sold {item.Quantity} units"
+            };
+            transactionsToAdd.Add(transaction);
+        }
+
+        if (transactionsToAdd.Count != 0)
+        {
+            _inventoryTransactionRepository.AddBulkAsync(transactionsToAdd);
         }
 
         return Result<bool>.CreateResult("Inventory updated successfully", 200, true);
