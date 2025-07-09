@@ -19,16 +19,16 @@ public class AgencySlugMiddleware
         {
             slug = headerSlug.FirstOrDefault();
         }
-        else
-        {
-            var host = context.Request.Host.Host;
-            var hostParts = host.Split('.');
-
-            if (!host.Contains("localhost") && hostParts.Length >= 3)
-            {
-                slug = hostParts[0];
-            }
-        }
+        // else
+        // {
+        //     var host = context.Request.Host.Host;
+        //     var hostParts = host.Split('.');
+        //
+        //     if (!host.Contains("localhost") && hostParts.Length >= 3)
+        //     {
+        //         slug = hostParts[0];
+        //     }
+        // }
 
         if (!string.IsNullOrWhiteSpace(slug))
         {
