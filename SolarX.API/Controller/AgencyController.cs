@@ -47,6 +47,16 @@ namespace SolarX.API.Controller
             return StatusCode(result.StatusCode, result);
         }
 
+        [HttpPut("credit/{agencyId:guid}")]
+        [Authorize(Roles = "SystemAdmin")]
+        public async Task<IActionResult> UpdateAgencyCredit(Guid agencyId, [FromBody] decimal creditLimit)
+        {
+            var result = await _globalTransactionsBehaviors.ExecuteInTransactionAsync(async () =>
+                await _agencyServices.UpdateAgencyCreditLimit(agencyId, creditLimit)
+            );
+            return StatusCode(result.StatusCode, result);
+        }
+
         [HttpDelete]
         [Authorize(Roles = "SystemAdmin")]
         public async Task<IActionResult> DeleteAgency(Guid agencyId)

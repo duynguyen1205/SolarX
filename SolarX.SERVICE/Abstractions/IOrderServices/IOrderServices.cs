@@ -12,9 +12,9 @@ public interface IOrderServices
 
     Task<Result<PagedResult<ResponseModel.OrderResponseModel>>> GetAllOrder(Guid agencyId, string? searchTerm,
         DateTimeOffset? dateOrder,
-        OrderStatus? status, bool seller, int pageIndex,
-        int pageSize
-    );
-    
+        OrderStatus? status, DeliveryStatus? deliveryStatus, bool seller, int pageIndex,
+        int pageSize);
+
     Task<Result<List<ResponseModel.OrderItemResponseModel?>>> GetOrderDetail(Guid orderId);
+    Task<Result> UpdateOrderStatus(Guid orderId, RequestModel.UpdateOrderStatusReq request);
 }

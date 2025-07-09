@@ -1,5 +1,4 @@
-﻿using System.Xml;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using SolarX.REPOSITORY.Abstractions;
 using SolarX.REPOSITORY.Entity;
 using SolarX.REPOSITORY.Enum;
@@ -82,7 +81,8 @@ public class OrderServices : IOrderServices
             IsB2C = false,
             OrderCode = orderCode,
             TotalAmount = totalAmount,
-            Status = PaymentStatus.Paid
+            Status = PaymentStatus.Paid,
+            DeliveryStatus = DeliveryStatus.Pending
         };
 
         var payment = new Payment
@@ -97,8 +97,6 @@ public class OrderServices : IOrderServices
         var sellerResult = await UpdateInventoryAsync(sellerAgencyId, request.OrderItems, orderId, orderCode);
         if (!sellerResult.Data)
             return Result.CreateResult(sellerResult.Message, 400);
-
-        await UpdateInventoryAsync(buyerAgencyId, request.OrderItems, orderId, orderCode, false);
 
         _orderRepository.AddEntity(order);
         _orderItemRepository.AddBulkAsync(orderItems);
@@ -126,68 +124,6 @@ public class OrderServices : IOrderServices
         }).ToList();
 
         return (result, total);
-    }
-
-    private async Task<Result<bool>> UpdateInventoryAsync(Guid agencyId, List<RequestModel.CreateOrderItemDto> items, Guid orderId,
-        string orderCode, bool isSeller = true)
-    {
-        var productIds = items.Select(i => i.ProductId).Distinct().ToList();
-        var inventories = await _inventoryRepository.GetAllWithQuery(i => i.AgencyId == agencyId && productIds.Contains(i.ProductId))
-            .ToDictionaryAsync(i => i.ProductId);
-
-        var transactions = new List<InventoryTransaction>();
-
-        foreach (var item in items)
-        {
-            var exists = inventories.TryGetValue(item.ProductId, out var inventory);
-
-            if (isSeller)
-            {
-                if (!exists || inventory!.Quantity < item.Quantity)
-                    return Result<bool>.CreateResult($"Insufficient inventory for product {item.ProductId}", 400, false);
-
-                inventory.Quantity -= item.Quantity;
-                _inventoryRepository.UpdateEntity(inventory);
-            }
-            else
-            {
-                if (exists)
-                {
-                    inventory!.Quantity += item.Quantity;
-                    _inventoryRepository.UpdateEntity(inventory);
-                }
-                else
-                {
-                    inventory = new Inventory
-                    {
-                        Id = Guid.NewGuid(),
-                        AgencyId = agencyId,
-                        ProductId = item.ProductId,
-                        Quantity = item.Quantity
-                    };
-                    _inventoryRepository.AddEntity(inventory);
-                }
-            }
-
-            transactions.Add(new InventoryTransaction
-            {
-                Id = Guid.NewGuid(),
-                AgencyId = agencyId,
-                ProductId = item.ProductId,
-                InventoryId = inventory.Id,
-                Type = isSeller ? InventoryTransactionType.ExportToBranch : InventoryTransactionType.ImportFromSupplier,
-                QuantityChanged = isSeller ? -item.Quantity : +item.Quantity,
-                OrderId = orderId,
-                Note = isSeller
-                    ? $"B2B Sale - Order {orderCode} - Exported {item.Quantity} units"
-                    : $"B2B Purchase - Order {orderCode} - Imported {item.Quantity} units"
-            });
-        }
-
-        if (transactions.Count > 0)
-            _inventoryTransactionRepository.AddBulkAsync(transactions);
-
-        return Result<bool>.CreateResult("Inventory updated successfully", 200, true);
     }
 
 
@@ -227,15 +163,13 @@ public class OrderServices : IOrderServices
             return Result.CreateResult(inventoryValidation.Message, 400);
         }
 
-        Customer customer = null!;
-        var customerExist = await _customerRepository.GetAllWithQuery(x => x.Email == request.Email).FirstOrDefaultAsync();
-        if (customerExist != null)
+        var customer = await _customerRepository.GetAllWithQuery(x => x.Email == request.Email).FirstOrDefaultAsync();
+        if (customer != null)
         {
-            if (customerExist.IsDeleted)
+            if (customer.IsDeleted)
             {
-                customerExist.IsDeleted = false;
-                _customerRepository.UpdateEntity(customerExist);
-                customer = customerExist;
+                customer.IsDeleted = false;
+                _customerRepository.UpdateEntity(customer);
             }
         }
         else
@@ -281,6 +215,7 @@ public class OrderServices : IOrderServices
             IsB2C = true,
             OrderCode = orderCode,
             OrderStatus = OrderStatus.Pending,
+            DeliveryStatus = DeliveryStatus.Pending,
             TotalAmount = totalAmount
         };
 
@@ -295,12 +230,12 @@ public class OrderServices : IOrderServices
         };
 
         // 7. Trừ tồn kho
-        var inventoryUpdateResult = await UpdateInventoryAsync(agencyId, request.Items, order.Id);
+        var inventoryUpdateResult =
+            await UpdateInventoryAsync(agencyId, request.Items, order.Id, orderCode, isSeller: true, isB2C: true);
         if (!inventoryUpdateResult.Data)
         {
             return Result.CreateResult(inventoryUpdateResult.Message, 400);
         }
-
 
         _orderRepository.AddEntity(order);
         _orderItemRepository.AddBulkAsync(orderItems);
@@ -311,12 +246,12 @@ public class OrderServices : IOrderServices
     }
 
     public async Task<Result<PagedResult<ResponseModel.OrderResponseModel>>> GetAllOrder(Guid agencyId, string? searchTerm,
-        DateTimeOffset? dateOrder, OrderStatus? status, bool seller,
+        DateTimeOffset? dateOrder, OrderStatus? status, DeliveryStatus? deliveryStatus, bool seller,
         int pageIndex, int pageSize)
     {
 
         var query = seller
-            ? _orderRepository.GetAllWithQuery(x => x.SellerAgencyId == agencyId && x.IsB2C)
+            ? _orderRepository.GetAllWithQuery(x => x.SellerAgencyId == agencyId)
             : _orderRepository.GetAllWithQuery(x => x.BuyerAgencyId == agencyId && !x.IsB2C);
 
         query = query.Include(x => x.Items);
@@ -335,12 +270,17 @@ public class OrderServices : IOrderServices
             query = query.Where(x => x.OrderStatus == status);
         }
 
+        if (deliveryStatus != null)
+        {
+            query = query.Where(x => x.DeliveryStatus == deliveryStatus);
+        }
 
         var resultList = await PagedResult<Order>.CreateAsync(query, pageIndex, pageSize);
         var result = resultList.Items.Select(x => new ResponseModel.OrderResponseModel(
             x.Id,
             x.OrderCode,
             x.OrderStatus.ToString(),
+            x.DeliveryStatus.ToString(),
             x.CreatedAt,
             x.TotalAmount
         )).ToList();
@@ -356,7 +296,7 @@ public class OrderServices : IOrderServices
             .Include(x => x.Items)
             .ThenInclude(x => x.Product)
             .FirstOrDefaultAsync();
-        
+
         if (orderExisting == null)
         {
             return Result<List<ResponseModel.OrderItemResponseModel?>>.CreateResult("Bad request", 400, null!);
@@ -371,6 +311,71 @@ public class OrderServices : IOrderServices
 
         return Result<List<ResponseModel.OrderItemResponseModel?>>.CreateResult("Get order detail", 200, order!);
     }
+
+    public async Task<Result> UpdateOrderStatus(Guid orderId, RequestModel.UpdateOrderStatusReq request)
+    {
+        var order = await _orderRepository.GetAllWithQuery(x => x.Id == orderId && !x.IsDeleted)
+            .Include(x => x.Items)
+            .Include(x => x.Payment)
+            .Include(x => x.BuyerAgency)
+            .ThenInclude(x => x.DefaultWallet)
+            .FirstOrDefaultAsync();
+
+        if (order == null)
+            return Result.CreateResult("Bad request", 400);
+
+        var items = order.Items.Select(i => new RequestModel.CreateOrderItemDto(
+            i.ProductId,
+            i.Quantity
+        )).ToList();
+
+        // Huỷ đơn → hoàn kho
+        if (request.DeliveryStatus == DeliveryStatus.Cancel || request.Status == OrderStatus.Canceled)
+        {
+            var agencyId = order.SellerAgencyId;
+
+            var restoreResult = await UpdateInventoryAsync(agencyId, items, order.Id, order.OrderCode, isSeller: false, order.IsB2C);
+            if (!restoreResult.Data)
+                return Result.CreateResult(restoreResult.Message, 400);
+
+            if (order is { IsB2C: false, Payment.Method: PaymentMethod.Credit })
+            {
+                var wallet = order.BuyerAgency.DefaultWallet;
+                if (wallet != null)
+                {
+                    wallet.CurrentDebt = Math.Max(0, wallet.CurrentDebt - order.TotalAmount);
+                    _agencyWalletRepository.UpdateEntity(wallet);
+                }
+            }
+
+            order.OrderStatus = OrderStatus.Canceled;
+            order.DeliveryStatus = DeliveryStatus.Cancel;
+            _orderRepository.UpdateEntity(order);
+            return Result.CreateResult("Update order status", 200);
+        }
+
+        if (!order.IsB2C && request.DeliveryStatus == DeliveryStatus.Delivered)
+        {
+            var buyerAgencyId = order.BuyerAgencyId!.Value;
+
+            var receiveResult =
+                await UpdateInventoryAsync(buyerAgencyId, items, order.Id, order.OrderCode, isSeller: false, isB2C: false);
+            if (!receiveResult.Data)
+                return Result.CreateResult(receiveResult.Message, 400);
+            order.OrderStatus = OrderStatus.Completed;
+        }
+
+        if (request.Status != null)
+            order.OrderStatus = request.Status.Value;
+
+        if (request.DeliveryStatus != null)
+            order.DeliveryStatus = request.DeliveryStatus.Value;
+
+        _orderRepository.UpdateEntity(order);
+
+        return Result.CreateResult("Update order status", 200);
+    }
+
 
     private async Task<Result<bool>> ValidateInventoryAsync(Guid agencyId, List<RequestModel.CreateOrderItemDto> items)
     {
@@ -411,49 +416,73 @@ public class OrderServices : IOrderServices
         return Result<bool>.CreateResult("Inventory validation passed", 200, true);
     }
 
-    private async Task<Result<bool>> UpdateInventoryAsync(Guid agencyId, List<RequestModel.CreateOrderItemDto> items, Guid orderId)
+    private async Task<Result<bool>> UpdateInventoryAsync(Guid agencyId, List<RequestModel.CreateOrderItemDto> items, Guid orderId,
+        string orderCode, bool isSeller = true, bool isB2C = true)
     {
-        var productIds = items.Select(i => i.ProductId).ToList();
+        var productIds = items.Select(i => i.ProductId).Distinct().ToList();
         var inventories = await _inventoryRepository
             .GetAllWithQuery(i => i.AgencyId == agencyId && productIds.Contains(i.ProductId))
-            .ToListAsync();
+            .ToDictionaryAsync(i => i.ProductId);
 
-        var inventoryDict = inventories.ToDictionary(i => i.ProductId);
-        var transactionsToAdd = new List<InventoryTransaction>(); // Thêm list để lưu transactions
+        var transactions = new List<InventoryTransaction>();
 
         foreach (var item in items)
         {
-            if (!inventoryDict.TryGetValue(item.ProductId, out var inventory))
-                continue;
+            var exists = inventories.TryGetValue(item.ProductId, out var inventory);
 
-            if (inventory.Quantity < item.Quantity)
+            if (isSeller)
             {
-                return Result<bool>.CreateResult(
-                    $"Insufficient inventory for product {item.ProductId}. Available: {inventory.Quantity}, Required: {item.Quantity}",
-                    400, false);
+                if (!exists || inventory!.Quantity < item.Quantity)
+                    return Result<bool>.CreateResult($"Insufficient inventory for product {item.ProductId}", 400, false);
+
+                inventory.Quantity -= item.Quantity;
+                _inventoryRepository.UpdateEntity(inventory);
+            }
+            else
+            {
+                if (exists)
+                {
+                    inventory!.Quantity += item.Quantity;
+                    _inventoryRepository.UpdateEntity(inventory);
+                }
+                else
+                {
+                    inventory = new Inventory
+                    {
+                        Id = Guid.NewGuid(),
+                        AgencyId = agencyId,
+                        ProductId = item.ProductId,
+                        Quantity = item.Quantity
+                    };
+                    _inventoryRepository.AddEntity(inventory);
+                }
             }
 
-            inventory.Quantity -= item.Quantity;
-            _inventoryRepository.UpdateEntity(inventory);
+            var transactionType = isSeller
+                ? isB2C ? InventoryTransactionType.SellToCustomer : InventoryTransactionType.ExportToBranch
+                : InventoryTransactionType.ReturnFromBranch;
 
-            var transaction = new InventoryTransaction
+            var note = isSeller
+                ? isB2C
+                    ? $"B2C Order - Sold {item.Quantity} units"
+                    : $"B2B Order - Exported {item.Quantity} units to branch"
+                : $"Order {orderCode} - Restocked {item.Quantity} units due to cancel";
+
+            transactions.Add(new InventoryTransaction
             {
                 Id = Guid.NewGuid(),
                 AgencyId = agencyId,
                 ProductId = item.ProductId,
-                InventoryId = inventory.Id, // Sửa từ existingInventory thành inventory
-                Type = InventoryTransactionType.SellToCustomer,
-                QuantityChanged = -item.Quantity,
+                InventoryId = inventory.Id,
                 OrderId = orderId,
-                Note = $"B2C Order - Sold {item.Quantity} units"
-            };
-            transactionsToAdd.Add(transaction);
+                Type = transactionType,
+                QuantityChanged = isSeller ? -item.Quantity : item.Quantity,
+                Note = note
+            });
         }
 
-        if (transactionsToAdd.Count != 0)
-        {
-            _inventoryTransactionRepository.AddBulkAsync(transactionsToAdd);
-        }
+        if (transactions.Count > 0)
+            _inventoryTransactionRepository.AddBulkAsync(transactions);
 
         return Result<bool>.CreateResult("Inventory updated successfully", 200, true);
     }

@@ -1,5 +1,4 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Abstractions;
 using SolarX.REPOSITORY.Abstractions;
 using SolarX.REPOSITORY.Entity;
 using SolarX.SERVICE.Abstractions.IAgencyServices;
@@ -12,27 +11,27 @@ public class AgencyServices : IAgencyServices
 {
     private readonly IBaseRepository<Agency, Guid> _agencyRepository;
     private readonly IBaseRepository<AgencyWallet, Guid> _agencyWalletRepository;
-    private readonly IBaseRepository<Inventory, Guid> _inventoryRepository;
     private readonly ICloudinaryService _cloudinaryService;
 
-    public AgencyServices(IBaseRepository<Agency, Guid> agencyRepository, ICloudinaryService cloudinaryService,
-        IBaseRepository<AgencyWallet, Guid> agencyWalletRepository, IBaseRepository<Inventory, Guid> inventoryRepository)
+
+    public AgencyServices(IBaseRepository<Agency, Guid> agencyRepository, IBaseRepository<AgencyWallet, Guid> agencyWalletRepository,
+        ICloudinaryService cloudinaryService)
     {
         _agencyRepository = agencyRepository;
-        _cloudinaryService = cloudinaryService;
         _agencyWalletRepository = agencyWalletRepository;
-        _inventoryRepository = inventoryRepository;
+        _cloudinaryService = cloudinaryService;
     }
 
     public async Task<Result<PagedResult<ResponseModel.AgencyResponseModel>>> GetAllAgencies(string? searchTerm, int pageIndex,
         int pageSize)
     {
-        var query = _agencyRepository.GetAllWithQuery(x => !x.IsDeleted);
+        var query = _agencyRepository.GetAllWithQuery(x => !x.IsDeleted && x.Slug != "admin");
         if (!string.IsNullOrEmpty(searchTerm))
         {
             query = query.Where(x => x.Name.Contains(searchTerm) || x.Hotline.Contains(searchTerm));
         }
 
+        query = query.Include(x => x.DefaultWallet);
         var listResult = await PagedResult<Agency>.CreateAsync(query, pageIndex, pageSize);
 
         var result = listResult.Items.Select(x => new ResponseModel.AgencyResponseModel(
@@ -43,7 +42,8 @@ public class AgencyServices : IAgencyServices
             x.BannerUrl,
             x.ThemeColor,
             x.Hotline,
-            x.DisplayWithMarkup
+            x.DisplayWithMarkup,
+            x.DefaultWallet!.CreditLimit
         )).ToList();
 
         var response = new PagedResult<ResponseModel.AgencyResponseModel>(result, listResult.PageIndex, listResult.PageSize,
@@ -212,5 +212,30 @@ public class AgencyServices : IAgencyServices
             throw new Exception($"Not found Agency \"{slug}\".");
         return agency;
 
+    }
+
+    public async Task<Result> UpdateAgencyCreditLimit(Guid agencyId, decimal creditLimit)
+    {
+        var agency = await _agencyRepository.GetById(agencyId, x => x.DefaultWallet!);
+        if (agency == null || agency.IsDeleted)
+        {
+            return Result.CreateResult("Agency not found", 404);
+        }
+
+        if (creditLimit < 0)
+        {
+            return Result.CreateResult("Credit limit must be greater than 0", 400);
+        }
+
+        var agencyWallet = agency.DefaultWallet;
+        if (agencyWallet == null)
+        {
+            return Result.CreateResult("Agency wallet not found", 404);
+        }
+
+        agencyWallet.CreditLimit = creditLimit;
+        _agencyWalletRepository.UpdateEntity(agencyWallet);
+
+        return Result.CreateResult("Update agency credit limit successfully", 200);
     }
 }

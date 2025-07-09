@@ -10,6 +10,7 @@ public static class ResponseModel
         string AgencyBanner,
         string ThemeColor,
         string Hotline,
-        bool DisplayWithMarkup
+        bool DisplayWithMarkup,
+        decimal CreditLimit
     );
 }

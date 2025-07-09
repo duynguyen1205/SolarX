@@ -6,6 +6,7 @@
         <NoWarn>$(NoWarn);1591</NoWarn>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
+        <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
     </PropertyGroup>
 
     <ItemGroup>
@@ -22,6 +23,19 @@
 
     <ItemGroup>
       <ProjectReference Include="..\SolarX.SERVICE\SolarX.SERVICE.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="Areas\FaqController\Controllers\" />
+      <Folder Include="Areas\FaqController\Data\" />
+      <Folder Include="Areas\FaqController\Models\" />
+      <Folder Include="Areas\FaqController\Views\" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Content Include="..\.dockerignore">
+        <Link>.dockerignore</Link>
+      </Content>
     </ItemGroup>
 
 </Project>

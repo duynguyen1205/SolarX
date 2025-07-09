@@ -29,4 +29,6 @@ public static class RequestModel
         Guid ProductId,
         int Quantity
     );
+
+    public record UpdateOrderStatusReq(OrderStatus? Status, DeliveryStatus? DeliveryStatus);
 }

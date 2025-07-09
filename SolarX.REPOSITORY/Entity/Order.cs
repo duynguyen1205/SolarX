@@ -20,6 +20,7 @@ public class Order : BaseEntity<Guid>, IAuditableEntity
     public PaymentStatus Status { get; set; }
     public string? Note { get; set; }
     public OrderStatus OrderStatus { get; set; }
+    public DeliveryStatus DeliveryStatus { get; set; }
 
     public Payment? Payment { get; set; }
     public ICollection<OrderItem> Items { get; set; } = new List<OrderItem>();

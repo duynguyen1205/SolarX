@@ -12,4 +12,5 @@ public interface IAgencyServices
     Task<Result> UpdateAgency(Guid agencyId, RequestModel.UpdateAgencyReq request);
     Task<Result> DeleteAgency(Guid agencyId);
     Task<Agency?> GetBySlugAsync(string slug);
+    Task<Result> UpdateAgencyCreditLimit(Guid agencyId, decimal creditLimit);
 }

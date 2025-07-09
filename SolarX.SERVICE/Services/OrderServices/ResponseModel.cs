@@ -2,7 +2,14 @@
 
 public static class ResponseModel
 {
-    public record OrderResponseModel(Guid OrderId, string OrderCode, string OrderStatus, DateTimeOffset OrderDate, decimal OrderTotal);
+    public record OrderResponseModel(
+        Guid OrderId,
+        string OrderCode,
+        string OrderStatus,
+        string DeliveryStatus,
+        DateTimeOffset OrderDate,
+        decimal OrderTotal
+    );
 
     public record OrderItemResponseModel(Guid ProductId, string ProductName, decimal ProductPrice, int Quantity);
 }
