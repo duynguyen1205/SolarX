@@ -15,6 +15,7 @@ public class OrderServices : IOrderServices
     private readonly IBaseRepository<Inventory, Guid> _inventoryRepository;
     private readonly IBaseRepository<InventoryTransaction, Guid> _inventoryTransactionRepository;
     private readonly IBaseRepository<Payment, Guid> _paymentRepository;
+    private readonly IBaseRepository<WalletTransaction, Guid> _walletTransactionRepository;
     private readonly IBaseRepository<Product, Guid> _productRepository;
     private readonly IBaseRepository<Agency, Guid> _agencyRepository;
     private readonly IBaseRepository<Customer, Guid> _customerRepository;
@@ -24,7 +25,8 @@ public class OrderServices : IOrderServices
         IBaseRepository<Payment, Guid> paymentRepository, IBaseRepository<Product, Guid> productRepository,
         IBaseRepository<OrderItem, Guid> orderItemRepository, IBaseRepository<Agency, Guid> agencyRepository,
         IBaseRepository<AgencyWallet, Guid> agencyWalletRepository,
-        IBaseRepository<InventoryTransaction, Guid> inventoryTransactionRepository, IBaseRepository<Customer, Guid> customerRepository)
+        IBaseRepository<InventoryTransaction, Guid> inventoryTransactionRepository, IBaseRepository<Customer, Guid> customerRepository,
+        IBaseRepository<WalletTransaction, Guid> walletTransactionRepository)
     {
         _orderRepository = orderRepository;
         _inventoryRepository = inventoryRepository;
@@ -35,6 +37,7 @@ public class OrderServices : IOrderServices
         _agencyWalletRepository = agencyWalletRepository;
         _inventoryTransactionRepository = inventoryTransactionRepository;
         _customerRepository = customerRepository;
+        _walletTransactionRepository = walletTransactionRepository;
     }
 
     public async Task<Result> CreateB2BOrder(Guid sellerAgencyId, Guid buyerAgencyId, RequestModel.CreateOrderReq request)
@@ -70,7 +73,15 @@ public class OrderServices : IOrderServices
                 return Result.CreateResult("Credit Limit", 400);
 
             agencyWallet.CurrentDebt += totalAmount;
+            var newTransaction = new WalletTransaction
+            {
+                Id = Guid.NewGuid(),
+                AgencyWalletId = agencyWallet.Id,
+                Amount = totalAmount,
+                Reason = $"Charge by credit for order with order code: {orderCode}"
+            };
             _agencyWalletRepository.UpdateEntity(agencyWallet);
+            _walletTransactionRepository.AddEntity(newTransaction);
         }
 
         var order = new Order
@@ -344,7 +355,15 @@ public class OrderServices : IOrderServices
                 if (wallet != null)
                 {
                     wallet.CurrentDebt = Math.Max(0, wallet.CurrentDebt - order.TotalAmount);
+                    var newTransaction = new WalletTransaction
+                    {
+                        Id = Guid.NewGuid(),
+                        AgencyWalletId = wallet.Id,
+                        Amount = order.TotalAmount,
+                        Reason = "Cancel order"
+                    };
                     _agencyWalletRepository.UpdateEntity(wallet);
+                    _walletTransactionRepository.AddEntity(newTransaction);
                 }
             }
 
