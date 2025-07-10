@@ -6,7 +6,9 @@ using SolarX.REPOSITORY;
 using SolarX.REPOSITORY.Abstractions;
 using SolarX.SERVICE.Abstractions.IAgencyServices;
 using SolarX.SERVICE.Abstractions.IAuthServices;
+using SolarX.SERVICE.Abstractions.IBlogServices;
 using SolarX.SERVICE.Abstractions.ICategoryServices;
+using SolarX.SERVICE.Abstractions.IConsultingRequestServices;
 using SolarX.SERVICE.Abstractions.IFaqServices;
 using SolarX.SERVICE.Abstractions.IInventoryServices;
 using SolarX.SERVICE.Abstractions.IInventoryTransactionServices;
@@ -17,8 +19,10 @@ using SolarX.SERVICE.Abstractions.IProductServices;
 using SolarX.SERVICE.Abstractions.IWalletService;
 using SolarX.SERVICE.Services.AgencyServices;
 using SolarX.SERVICE.Services.AuthServices;
+using SolarX.SERVICE.Services.BlogServices;
 using SolarX.SERVICE.Services.CategoryServices;
 using SolarX.SERVICE.Services.CloudinaryServices;
+using SolarX.SERVICE.Services.ConsultingRequestServices;
 using SolarX.SERVICE.Services.FaqServices;
 using SolarX.SERVICE.Services.InventoryServices;
 using SolarX.SERVICE.Services.InventoryTransactionServices;
@@ -62,7 +66,9 @@ builder.Services
     .AddTransient<IOrderServices, OrderServices>()
     .AddTransient<IInventoryServices, InventoryServices>()
     .AddTransient<IInventoryTransactionServices, InventoryTransactionServices>()
-    .AddTransient<IFaqServices, FaqServices>();
+    .AddTransient<IFaqServices, FaqServices>()
+    .AddTransient<IBlogServices, BlogServices>()
+    .AddTransient<IConsultingRequestServices, ConsultingRequestServices>();
 
 
 var app = builder.Build();

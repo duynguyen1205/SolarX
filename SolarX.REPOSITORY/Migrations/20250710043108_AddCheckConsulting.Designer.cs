@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SolarX.REPOSITORY;
 
@@ -11,9 +12,11 @@ using SolarX.REPOSITORY;
 namespace SolarX.REPOSITORY.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250710043108_AddCheckConsulting")]
+    partial class AddCheckConsulting
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -76,7 +79,7 @@ namespace SolarX.REPOSITORY.Migrations
                         {
                             Id = new Guid("44444444-4444-4444-4444-444444444444"),
                             BannerUrl = "https://solarx.vn/wp-content/uploads/2021/09/banner-solarx.png",
-                            CreatedAt = new DateTimeOffset(new DateTime(2025, 7, 10, 14, 20, 9, 339, DateTimeKind.Unspecified).AddTicks(7480), new TimeSpan(0, 7, 0, 0, 0)),
+                            CreatedAt = new DateTimeOffset(new DateTime(2025, 7, 10, 11, 31, 7, 450, DateTimeKind.Unspecified).AddTicks(4229), new TimeSpan(0, 7, 0, 0, 0)),
                             DisplayWithMarkup = false,
                             Hotline = "0952252586",
                             IsDeleted = false,
@@ -85,7 +88,7 @@ namespace SolarX.REPOSITORY.Migrations
                             Name = "SolarX",
                             Slug = "Admin",
                             ThemeColor = "#000000",
-                            UpdateAt = new DateTimeOffset(new DateTime(2025, 7, 10, 14, 20, 9, 339, DateTimeKind.Unspecified).AddTicks(7508), new TimeSpan(0, 7, 0, 0, 0))
+                            UpdateAt = new DateTimeOffset(new DateTime(2025, 7, 10, 11, 31, 7, 450, DateTimeKind.Unspecified).AddTicks(4259), new TimeSpan(0, 7, 0, 0, 0))
                         });
                 });
 
@@ -200,10 +203,6 @@ namespace SolarX.REPOSITORY.Migrations
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("datetimeoffset");
 
-                    b.Property<string>("Email")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("FullName")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -211,18 +210,19 @@ namespace SolarX.REPOSITORY.Migrations
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
-                    b.Property<string>("Message")
+                    b.Property<bool>("IsFinished")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Note")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("PhoneNumber")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("RequestType")
-                        .HasColumnType("int");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("int");
+                    b.Property<DateTimeOffset>("PreferredTime")
+                        .HasColumnType("datetimeoffset");
 
                     b.Property<DateTimeOffset>("UpdateAt")
                         .HasColumnType("datetimeoffset");
@@ -738,14 +738,14 @@ namespace SolarX.REPOSITORY.Migrations
                         {
                             Id = new Guid("55555555-5555-5555-5555-555555555555"),
                             AgencyId = new Guid("44444444-4444-4444-4444-444444444444"),
-                            CreatedAt = new DateTimeOffset(new DateTime(2025, 7, 10, 14, 20, 9, 339, DateTimeKind.Unspecified).AddTicks(7643), new TimeSpan(0, 7, 0, 0, 0)),
+                            CreatedAt = new DateTimeOffset(new DateTime(2025, 7, 10, 11, 31, 7, 450, DateTimeKind.Unspecified).AddTicks(4406), new TimeSpan(0, 7, 0, 0, 0)),
                             Email = "Admin@gmail.com",
                             FullName = "Admin SolarX",
                             IsDeleted = false,
                             Password = "nnsY/SJvZg/iBkxHXS/l9g==:0KN/XMNuKmz3nhL40RxTMNcMC9Xe5UE6XuYZ6bZQ1YU=",
                             PhoneNumber = "0952252586",
                             Role = 0,
-                            UpdateAt = new DateTimeOffset(new DateTime(2025, 7, 10, 14, 20, 9, 339, DateTimeKind.Unspecified).AddTicks(7644), new TimeSpan(0, 7, 0, 0, 0)),
+                            UpdateAt = new DateTimeOffset(new DateTime(2025, 7, 10, 11, 31, 7, 450, DateTimeKind.Unspecified).AddTicks(4407), new TimeSpan(0, 7, 0, 0, 0)),
                             UserName = "adminSolarX"
                         });
                 });
