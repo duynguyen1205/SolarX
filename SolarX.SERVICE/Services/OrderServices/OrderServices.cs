@@ -316,8 +316,6 @@ public class OrderServices : IOrderServices
         var deliveringOrders = await query.Where(x => x.DeliveryStatus == DeliveryStatus.Shipping).CountAsync();
         var completedOrders = await query.Where(x => x.OrderStatus == OrderStatus.Completed).CountAsync();
 
-        // chạy song song
-
         var statistics = new ResponseModel.OrderStatisticsResponseModel(
             todayOrders,
             pendingOrders,
