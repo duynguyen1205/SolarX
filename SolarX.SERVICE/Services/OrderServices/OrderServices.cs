@@ -258,7 +258,8 @@ public class OrderServices : IOrderServices
 
     public async Task<Result<PagedResult<ResponseModel.OrderResponseModel>>> GetAllOrder(Guid agencyId, string? searchTerm,
         DateTimeOffset? dateOrder, OrderStatus? status, DeliveryStatus? deliveryStatus, bool seller,
-        int pageIndex, int pageSize)
+        int pageIndex, int pageSize
+    )
     {
 
         var query = seller
@@ -299,6 +300,32 @@ public class OrderServices : IOrderServices
         var response =
             new PagedResult<ResponseModel.OrderResponseModel>(result, resultList.PageIndex, resultList.PageSize, resultList.TotalCount);
         return Result<PagedResult<ResponseModel.OrderResponseModel>>.CreateResult("Get All Order", 200, response);
+    }
+
+    public async Task<Result<ResponseModel.OrderStatisticsResponseModel>> GetOrderStatistics(Guid agencyId)
+    {
+        var query = _orderRepository.GetAllWithQuery(x => x.SellerAgencyId == agencyId && !x.IsDeleted);
+
+        var today = DateTimeOffset.UtcNow.Date;
+        var yesterday = today.AddDays(-1);
+        var tomorrow = today.AddDays(1);
+
+        var todayOrders = await query.Where(x => x.CreatedAt.Date >= today && x.CreatedAt.Date < tomorrow).CountAsync();
+        var yesterdayOrders = await query.Where(x => x.CreatedAt.Date >= yesterday && x.CreatedAt.Date < today).CountAsync();
+        var pendingOrders = await query.Where(x => x.OrderStatus == OrderStatus.Pending).CountAsync();
+        var deliveringOrders = await query.Where(x => x.DeliveryStatus == DeliveryStatus.Shipping).CountAsync();
+        var completedOrders = await query.Where(x => x.OrderStatus == OrderStatus.Completed).CountAsync();
+
+        // chạy song song
+
+        var statistics = new ResponseModel.OrderStatisticsResponseModel(
+            todayOrders,
+            pendingOrders,
+            deliveringOrders,
+            completedOrders,
+            yesterdayOrders - todayOrders
+        );
+        return Result<ResponseModel.OrderStatisticsResponseModel>.CreateResult("Get Order Statistics", 200, statistics);
     }
 
     public async Task<Result<List<ResponseModel.OrderItemResponseModel?>>> GetOrderDetail(Guid orderId)

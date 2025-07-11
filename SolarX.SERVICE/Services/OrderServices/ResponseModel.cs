@@ -11,5 +11,13 @@ public static class ResponseModel
         decimal OrderTotal
     );
 
+    public record OrderStatisticsResponseModel(
+        int TodayOrders,
+        int PendingOrders,
+        int DeliveringOrders,
+        int CompletedOrders,
+        int Compare
+    );
+
     public record OrderItemResponseModel(Guid ProductId, string ProductName, decimal ProductPrice, int Quantity);
 }

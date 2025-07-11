@@ -14,7 +14,7 @@ public interface IOrderServices
         DateTimeOffset? dateOrder,
         OrderStatus? status, DeliveryStatus? deliveryStatus, bool seller, int pageIndex,
         int pageSize);
-
+    Task<Result<ResponseModel.OrderStatisticsResponseModel>> GetOrderStatistics(Guid agencyId);
     Task<Result<List<ResponseModel.OrderItemResponseModel?>>> GetOrderDetail(Guid orderId);
     Task<Result> UpdateOrderStatus(Guid orderId, RequestModel.UpdateOrderStatusReq request);
 }

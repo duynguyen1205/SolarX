@@ -41,6 +41,16 @@ namespace SolarX.API.Controller
             return StatusCode(result.StatusCode, result);
         }
 
+        [HttpGet("statistics")]
+        [Authorize]
+        public async Task<IActionResult> GetOrderStatistics()
+        {
+            var agencyId = User.FindFirst("AgencyId")?.Value!;
+            var result = await _orderServices.GetOrderStatistics(Guid.Parse(agencyId));
+            return StatusCode(result.StatusCode, result);
+        }
+
+
         [HttpPut("{orderId:guid}")]
         [Authorize]
         public async Task<IActionResult> UpdateOrderStatus(Guid orderId, RequestModel.UpdateOrderStatusReq request)

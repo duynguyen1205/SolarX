@@ -19,7 +19,7 @@ public class GlobalExceptionHandlingMiddleware : IMiddleware
         }
         catch (Exception e)
         {
-            _logger.LogError(e.Message, "Error from server");
+            _logger.LogError(e, "Unhandled exception in middleware");
             await HandleExceptionAsync(context, e);
         }
     }
@@ -36,7 +36,8 @@ public class GlobalExceptionHandlingMiddleware : IMiddleware
         context.Response.ContentType = "application/json";
         context.Response.StatusCode = statusCode;
         
-        _logger.LogError(JsonSerializer.Serialize(response), "Error during transaction execution");
+        _logger.LogError("Error during transaction execution: {Response}", JsonSerializer.Serialize(response));
+
         
         await context.Response.WriteAsync(JsonSerializer.Serialize(response));
     }
