@@ -3,5 +3,7 @@
 public enum Role
 {
     SystemAdmin,
-    AgencyAdmin
+    SystemStaff,
+    AgencyAdmin,
+    AgencyStaff
 }

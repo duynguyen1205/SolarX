@@ -1,7 +1,9 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using CloudinaryDotNet;
+using Microsoft.EntityFrameworkCore;
 using SolarX.REPOSITORY.Abstractions;
 using SolarX.REPOSITORY.Entity;
 using SolarX.SERVICE.Abstractions.IBlogServices;
+using SolarX.SERVICE.Abstractions.ICloudinaryService;
 using SolarX.SERVICE.Services.Base;
 
 namespace SolarX.SERVICE.Services.BlogServices;
@@ -9,10 +11,12 @@ namespace SolarX.SERVICE.Services.BlogServices;
 public class BlogServices : IBlogServices
 {
     private readonly IBaseRepository<BlogPost, Guid> _blogRepository;
+    private readonly ICloudinaryService _cloudinaryService;
 
-    public BlogServices(IBaseRepository<BlogPost, Guid> blogRepository)
+    public BlogServices(IBaseRepository<BlogPost, Guid> blogRepository, ICloudinaryService cloudinaryService)
     {
         _blogRepository = blogRepository;
+        _cloudinaryService = cloudinaryService;
     }
 
     public async Task<Result<PagedResult<ResponseModel.BlogResponseModel>>> GetBlog(Guid agencyId, string? searchTerm, int pageIndex,
@@ -26,12 +30,27 @@ public class BlogServices : IBlogServices
 
         var resultList = await PagedResult<BlogPost>.CreateAsync(query, pageIndex, pageSize);
 
-        var blogPost = resultList.Items.Select(x => new ResponseModel.BlogResponseModel(x.Id, x.Tittle, x.Content)).ToList();
+        var blogPost = resultList.Items.Select(x => new ResponseModel.BlogResponseModel(x.Id, x.Tittle, x.ThumbnailUrl)).ToList();
 
         var response =
             new PagedResult<ResponseModel.BlogResponseModel>(blogPost, resultList.TotalCount, resultList.PageIndex,
                 resultList.PageSize);
         return Result<PagedResult<ResponseModel.BlogResponseModel>>.CreateResult("Get blog success", 200, response);
+    }
+
+    public async Task<Result<ResponseModel.BlogResponseDetail>> GetBlogDetail(Guid blogId)
+    {
+        var blogExisting =
+            await _blogRepository.GetAllWithQuery(x => x.Id == blogId && !x.IsDeleted)
+                .FirstOrDefaultAsync();
+        if (blogExisting == null)
+        {
+            return Result<ResponseModel.BlogResponseDetail>.CreateResult("Blog not found", 404, null!);
+        }
+
+        var response = new ResponseModel.BlogResponseDetail(blogExisting.Id, blogExisting.Tittle, blogExisting.ThumbnailUrl,
+            blogExisting.Content, blogExisting.Author, blogExisting.CreatedAt);
+        return Result<ResponseModel.BlogResponseDetail>.CreateResult("Get blog detail success", 200, response);
     }
 
     public async Task<Result> CreateBlog(Guid agencyId, RequestModel.CreateBlogReq request)
@@ -44,13 +63,22 @@ public class BlogServices : IBlogServices
             return Result.CreateResult("Blog already exist", 400);
         }
 
+        string imageUrl = null!;
+        if (request.Image != null)
+        {
+            imageUrl = await _cloudinaryService.UploadFileAsync(request.Image, $"{agencyId}/blog");
+        }
+
         var newBlog = new BlogPost
         {
             Id = Guid.NewGuid(),
             AgencyId = agencyId,
             Tittle = request.Title,
-            Content = request.Content
+            Content = request.Content,
+            Author = request.AuthorName,
+            ThumbnailUrl = imageUrl
         };
+
         _blogRepository.AddEntity(newBlog);
         return Result.CreateResult("Create blog success", 201);
     }

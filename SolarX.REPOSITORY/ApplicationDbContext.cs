@@ -140,8 +140,22 @@ public class ApplicationDbContext : DbContext
             UpdateAt = DateTimeOffset.Now,
             IsDeleted = false
         };
+        var staffUser = new User
+        {
+            Id = new Guid("66666666-6666-6666-6666-666666666666"),
+            UserName = "staffSolarX",
+            Password = "nnsY/SJvZg/iBkxHXS/l9g==:0KN/XMNuKmz3nhL40RxTMNcMC9Xe5UE6XuYZ6bZQ1YU=",
+            Email = "Staff@gmail.com",
+            FullName = "Staff SolarX",
+            PhoneNumber = "0952252587",
+            AgencyId = agency.Id,
+            Role = Role.SystemStaff,
+            CreatedAt = DateTimeOffset.Now,
+            UpdateAt = DateTimeOffset.Now,
+            IsDeleted = false
+        };
 
-        modelBuilder.Entity<User>().HasData(user);
+        modelBuilder.Entity<User>().HasData(user, staffUser);
 
         base.OnModelCreating(modelBuilder);
     }

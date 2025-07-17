@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using SolarX.API.Behaviors;
 using SolarX.SERVICE.Abstractions.IBlogServices;
@@ -28,9 +27,16 @@ namespace SolarX.API.Controller
             return StatusCode(result.StatusCode, result);
         }
 
+        [HttpGet("{blogId:guid}")]
+        public async Task<IActionResult> GetBlogPostDetail(Guid blogId)
+        {
+            var result = await _blogServices.GetBlogDetail(blogId);
+            return StatusCode(result.StatusCode, result);
+        }
+
         [HttpPost]
         [Authorize]
-        public async Task<IActionResult> CreateBlogPost(RequestModel.CreateBlogReq request)
+        public async Task<IActionResult> CreateBlogPost([FromForm] RequestModel.CreateBlogReq request)
         {
             var agencyId = User.FindFirst("AgencyId")?.Value!;
             var result = await _globalTransactionsBehaviors.ExecuteInTransactionAsync(async () =>
@@ -41,7 +47,7 @@ namespace SolarX.API.Controller
 
         [HttpPut("{blogId:guid}")]
         [Authorize]
-        public async Task<IActionResult> UpdateBlogPost(Guid blogId, RequestModel.UpdateBlogReq request)
+        public async Task<IActionResult> UpdateBlogPost(Guid blogId, [FromForm] RequestModel.UpdateBlogReq request)
         {
             var agencyId = User.FindFirst("AgencyId")?.Value!;
             var result = await _globalTransactionsBehaviors.ExecuteInTransactionAsync(async () =>
