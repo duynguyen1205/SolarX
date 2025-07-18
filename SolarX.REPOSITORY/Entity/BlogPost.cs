@@ -10,8 +10,9 @@ public class BlogPost : BaseEntity<Guid>, IAuditableEntity
     public string Tittle { get; set; }
     public string Content { get; set; }
 
-    public string? ThumbnailUrl  { get; set; }
+    public string? ThumbnailUrl { get; set; }
     public string? Author { get; set; }
+    public string Category { get; set; }
 
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset UpdateAt { get; set; }

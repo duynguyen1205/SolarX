@@ -2,7 +2,7 @@
 
 public static class ResponseModel
 {
-    public record BlogResponseModel(Guid Id, string Title, string? ImageUrl);
+    public record BlogResponseModel(Guid Id, string Title, string? ImageUrl, DateTimeOffset CreatedDate);
 
     public record BlogResponseDetail(
         Guid Id,

@@ -30,7 +30,8 @@ public class BlogServices : IBlogServices
 
         var resultList = await PagedResult<BlogPost>.CreateAsync(query, pageIndex, pageSize);
 
-        var blogPost = resultList.Items.Select(x => new ResponseModel.BlogResponseModel(x.Id, x.Tittle, x.ThumbnailUrl)).ToList();
+        var blogPost = resultList.Items.Select(x => new ResponseModel.BlogResponseModel(x.Id, x.Tittle, x.ThumbnailUrl, x.CreatedAt))
+            .ToList();
 
         var response =
             new PagedResult<ResponseModel.BlogResponseModel>(blogPost, resultList.TotalCount, resultList.PageIndex,
@@ -113,7 +114,7 @@ public class BlogServices : IBlogServices
             {
                 await _cloudinaryService.DeleteFile(blog.ThumbnailUrl);
             }
-            
+
             blog.ThumbnailUrl = imageUrl;
         }
 
