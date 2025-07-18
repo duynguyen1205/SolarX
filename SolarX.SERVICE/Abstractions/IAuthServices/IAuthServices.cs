@@ -6,6 +6,7 @@ namespace SolarX.SERVICE.Abstractions.IAuthServices;
 public interface IAuthServices
 {
     Task<Result<string>> Login(RequestModel.LoginRequest request);
-    Task<Result> AdminCreateAccount(RequestModel.RegisterRequest request);
+    Task<Result> AdminCreateAccount(RequestModel.RegisterRequest request, bool isAgencyAdmin);
+    Task<Result> AgencyAdminCreateAccount(Guid agencyId,RequestModel.RegisterAgencyRequest request);
     string CreatAccount(string password);
 }

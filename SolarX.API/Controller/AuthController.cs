@@ -1,4 +1,3 @@
-using CloudinaryDotNet.Actions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SolarX.API.Behaviors;
@@ -29,10 +28,21 @@ namespace SolarX.API.Controller
 
         [HttpPost("register")]
         [Authorize(Roles = "SystemAdmin")]
-        public async Task<IActionResult> RegisterByAdmin( RequestModel.RegisterRequest request)
+        public async Task<IActionResult> RegisterByAdmin(RequestModel.RegisterRequest request, bool isAgencyAdmin)
         {
             var result = await _globalTransactionsBehaviors.ExecuteInTransactionAsync(async () =>
-                await _authServices.AdminCreateAccount(request)
+                await _authServices.AdminCreateAccount(request, isAgencyAdmin)
+            );
+            return StatusCode(result.StatusCode, result);
+        }
+
+        [HttpPost("register/agencyStaff")]
+        [Authorize(Roles = "AgencyAdmin")]
+        public async Task<IActionResult> RegisterByAgencyAdmin(RequestModel.RegisterAgencyRequest request)
+        {
+            var agencyId = User.FindFirst("AgencyId")?.Value!;
+            var result = await _globalTransactionsBehaviors.ExecuteInTransactionAsync(async () =>
+                await _authServices.AgencyAdminCreateAccount(Guid.Parse(agencyId), request)
             );
             return StatusCode(result.StatusCode, result);
         }

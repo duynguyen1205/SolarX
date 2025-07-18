@@ -57,7 +57,7 @@ public class AuthServices : IAuthServices
     }
 
 
-    public async Task<Result> AdminCreateAccount(RequestModel.RegisterRequest request)
+    public async Task<Result> AdminCreateAccount(RequestModel.RegisterRequest request, bool isAgencyAdmin)
     {
         var isUserExist = await _userRepository.GetAllWithQuery(x => x.Email == request.Email)
             .FirstOrDefaultAsync();
@@ -75,7 +75,7 @@ public class AuthServices : IAuthServices
             isUserExist.PhoneNumber = request.PhoneNumber;
             isUserExist.FullName = request.FirstName;
             isUserExist.Password = hashPassword;
-            isUserExist.Role = Role.AgencyAdmin;
+            isUserExist.Role = isAgencyAdmin ? Role.AgencyAdmin : Role.SystemStaff;
             isUserExist.IsDeleted = false;
             isUserExist.AgencyId = request.AgencyId;
 
@@ -93,8 +93,51 @@ public class AuthServices : IAuthServices
             PhoneNumber = request.PhoneNumber,
             FullName = request.LastName,
             Password = newHashPassword,
-            Role = Role.AgencyAdmin,
+            Role = isAgencyAdmin ? Role.AgencyAdmin : Role.SystemStaff,
             AgencyId = request.AgencyId
+        };
+        _userRepository.AddEntity(newUser);
+        return Result.CreateResult("Create user successfully", 201);
+    }
+
+    public async Task<Result> AgencyAdminCreateAccount(Guid agencyId,RequestModel.RegisterAgencyRequest request)
+    {
+        var isUserExist = await _userRepository.GetAllWithQuery(x => x.Email == request.Email)
+            .FirstOrDefaultAsync();
+
+        if (isUserExist != null)
+        {
+
+            if (!isUserExist.IsDeleted)
+            {
+                return Result.CreateResult("Email already exist", 400);
+            }
+
+
+            var hashPassword = _passwordHasherServices.HashPassword(request.Password);
+            isUserExist.PhoneNumber = request.PhoneNumber;
+            isUserExist.FullName = request.FirstName;
+            isUserExist.Password = hashPassword;
+            isUserExist.Role = Role.AgencyStaff;
+            isUserExist.IsDeleted = false;
+            isUserExist.AgencyId = agencyId;
+
+            _userRepository.UpdateEntity(isUserExist);
+            return Result.CreateResult("Account recreated successfully", 201);
+        }
+
+
+        var newHashPassword = _passwordHasherServices.HashPassword(request.Password);
+        var newUser = new User
+        {
+            Id = Guid.NewGuid(),
+            Email = request.Email,
+            UserName = request.Email,
+            PhoneNumber = request.PhoneNumber,
+            FullName = request.LastName,
+            Password = newHashPassword,
+            Role = Role.AgencyStaff,
+            AgencyId = agencyId
         };
         _userRepository.AddEntity(newUser);
         return Result.CreateResult("Create user successfully", 201);
