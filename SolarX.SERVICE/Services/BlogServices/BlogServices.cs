@@ -25,12 +25,13 @@ public class BlogServices : IBlogServices
         var query = _blogRepository.GetAllWithQuery(x => x.AgencyId == agencyId && !x.IsDeleted);
         if (!string.IsNullOrEmpty(searchTerm))
         {
-            query = query.Where(x => x.Tittle.Contains(searchTerm));
+            query = query.Where(x => x.Tittle.Contains(searchTerm) || x.Category.Contains(searchTerm));
         }
 
         var resultList = await PagedResult<BlogPost>.CreateAsync(query, pageIndex, pageSize);
 
-        var blogPost = resultList.Items.Select(x => new ResponseModel.BlogResponseModel(x.Id, x.Tittle, x.ThumbnailUrl, x.CreatedAt))
+        var blogPost = resultList.Items
+            .Select(x => new ResponseModel.BlogResponseModel(x.Id, x.Tittle, x.ThumbnailUrl, x.CreatedAt, x.Category))
             .ToList();
 
         var response =
@@ -50,7 +51,7 @@ public class BlogServices : IBlogServices
         }
 
         var response = new ResponseModel.BlogResponseDetail(blogExisting.Id, blogExisting.Tittle, blogExisting.ThumbnailUrl,
-            blogExisting.Content, blogExisting.Author, blogExisting.CreatedAt);
+            blogExisting.Content, blogExisting.Author, blogExisting.CreatedAt, blogExisting.Category);
         return Result<ResponseModel.BlogResponseDetail>.CreateResult("Get blog detail success", 200, response);
     }
 
@@ -77,7 +78,8 @@ public class BlogServices : IBlogServices
             Tittle = request.Title,
             Content = request.Content,
             Author = request.AuthorName,
-            ThumbnailUrl = imageUrl
+            ThumbnailUrl = imageUrl,
+            Category = request.CategoryName
         };
 
         _blogRepository.AddEntity(newBlog);
