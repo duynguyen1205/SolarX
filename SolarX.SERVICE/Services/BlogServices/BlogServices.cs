@@ -120,9 +120,9 @@ public class BlogServices : IBlogServices
             blog.ThumbnailUrl = imageUrl;
         }
 
-        if (request.AuthorName != null && request.AuthorName != blog.Author)
+        if (request.CategoryName != null && request.CategoryName != blog.Category)
         {
-            blog.Author = request.AuthorName;
+            blog.Category = request.CategoryName;
         }
 
         _blogRepository.UpdateEntity(blog);

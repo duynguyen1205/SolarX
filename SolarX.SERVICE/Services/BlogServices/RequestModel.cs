@@ -13,5 +13,5 @@ public static class RequestModel
         [Required] string CategoryName
     );
 
-    public record UpdateBlogReq(string? Title, string? Content, IFormFile? Image, string? AuthorName);
+    public record UpdateBlogReq(string? Title, string? Content, IFormFile? Image, string? CategoryName);
 }
