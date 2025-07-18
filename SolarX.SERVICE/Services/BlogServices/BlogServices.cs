@@ -106,6 +106,22 @@ public class BlogServices : IBlogServices
             blog.Content = request.Content;
         }
 
+        if (request.Image != null)
+        {
+            var imageUrl = await _cloudinaryService.UploadFileAsync(request.Image, $"{agencyId}/blog");
+            if (blog.ThumbnailUrl != null)
+            {
+                await _cloudinaryService.DeleteFile(blog.ThumbnailUrl);
+            }
+            
+            blog.ThumbnailUrl = imageUrl;
+        }
+
+        if (request.AuthorName != null && request.AuthorName != blog.Author)
+        {
+            blog.Author = request.AuthorName;
+        }
+
         _blogRepository.UpdateEntity(blog);
         return Result.CreateResult("Update blog success", 201);
     }
