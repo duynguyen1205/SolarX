@@ -29,7 +29,13 @@ public static class RequestModel
         bool DisplayWithMarkup,
         [Required]
         [Range(0.01, double.MaxValue, ErrorMessage = "Markup Percent must be greater than 0")]
-        decimal CreditLimit
+        decimal CreditLimit,
+        [Required]
+        [StringLength(500, MinimumLength = 3, ErrorMessage = "Address  must be between 3 and 50 characters.")]
+        string Address,
+        [Required]
+        [EmailAddress(ErrorMessage = "Invalid email format.")]
+        string Email
     );
 
 
@@ -44,6 +50,8 @@ public static class RequestModel
         string? Hotline,
         [Range(0.01, double.MaxValue, ErrorMessage = "Markup Percent must be greater than 0")]
         float? MarkupPercent,
-        bool? DisplayWithMarkup
+        bool? DisplayWithMarkup,
+        string? Address,
+        string? Email
     );
 }

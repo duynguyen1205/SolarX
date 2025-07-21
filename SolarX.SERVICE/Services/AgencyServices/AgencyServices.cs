@@ -103,6 +103,8 @@ public class AgencyServices : IAgencyServices
                 existingAgency.IsDeleted = false;
                 existingAgency.LogoUrl = uploadTasksUpdate[0].Result;
                 existingAgency.BannerUrl = uploadTasksUpdate[1].Result;
+                existingAgency.Address = request.Address;
+                existingAgency.Email = request.Email;
 
                 _agencyRepository.UpdateEntity(existingAgency);
                 return Result.CreateResult("Create Agency successfully", 201);
@@ -130,7 +132,9 @@ public class AgencyServices : IAgencyServices
             MarkupPercent = request.MarkupPercent,
             DisplayWithMarkup = request.DisplayWithMarkup,
             LogoUrl = uploadTasks[0].Result,
-            BannerUrl = uploadTasks[1].Result
+            BannerUrl = uploadTasks[1].Result,
+            Address = request.Address,
+            Email = request.Email
         };
 
         _agencyRepository.AddEntity(newAgency);
@@ -165,6 +169,16 @@ public class AgencyServices : IAgencyServices
         if (request.ThemeColor != null && existingAgency.ThemeColor != request.ThemeColor)
         {
             existingAgency.ThemeColor = request.ThemeColor;
+        }
+
+        if (request.Address != null && existingAgency.Address != request.Address)
+        {
+            existingAgency.Address = request.Address;
+        }
+
+        if (request.Email != null && existingAgency.Email != request.Email)
+        {
+            existingAgency.Email = request.Email;
         }
 
         if (request.Hotline != null && existingAgency.Hotline != request.Hotline)
