@@ -96,9 +96,9 @@ public class AgencyServices : IAgencyServices
                 await Task.WhenAll(uploadTasksUpdate);
                 existingAgency.Name = request.Name;
                 existingAgency.Slug = request.Slug;
-                existingAgency.ThemeColor = request.ThemeColor;
+                existingAgency.ThemeColor = request.ThemeColor ?? "#000000";
                 existingAgency.Hotline = request.Hotline;
-                existingAgency.MarkupPercent = request.MarkupPercent;
+                existingAgency.MarkupPercent = request.MarkupPercent ?? 0;
                 existingAgency.DisplayWithMarkup = request.DisplayWithMarkup;
                 existingAgency.IsDeleted = false;
                 existingAgency.LogoUrl = uploadTasksUpdate[0].Result;
@@ -127,9 +127,9 @@ public class AgencyServices : IAgencyServices
             Id = Guid.NewGuid(),
             Name = request.Name,
             Slug = request.Slug,
-            ThemeColor = request.ThemeColor,
+            ThemeColor = request.ThemeColor ?? "#000000",
             Hotline = request.Hotline,
-            MarkupPercent = request.MarkupPercent,
+            MarkupPercent = request.MarkupPercent ?? 0,
             DisplayWithMarkup = request.DisplayWithMarkup,
             LogoUrl = uploadTasks[0].Result,
             BannerUrl = uploadTasks[1].Result,
@@ -143,7 +143,7 @@ public class AgencyServices : IAgencyServices
         {
             Id = Guid.NewGuid(),
             AgencyId = newAgency.Id,
-            CreditLimit = request.CreditLimit,
+            CreditLimit = request.CreditLimit ?? 0,
             CurrentDebt = 0,
             Balance = 0
         };
