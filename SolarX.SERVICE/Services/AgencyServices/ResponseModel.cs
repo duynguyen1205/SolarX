@@ -8,9 +8,20 @@ public static class ResponseModel
         string AgencySlug,
         string AgencyLogo,
         string AgencyBanner,
+        string Address,
+        string Email,
         string ThemeColor,
         string Hotline,
         bool DisplayWithMarkup,
         decimal CreditLimit
     );
+
+    public record AgencyDetailResponseModel(
+        string LogoUrl,
+        string Phone,
+        string Email,
+        string Address,
+        string Name
+    );
+
 }

@@ -40,6 +40,8 @@ public class AgencyServices : IAgencyServices
             x.Slug,
             x.LogoUrl,
             x.BannerUrl,
+            x.Address,
+            x.Email,
             x.ThemeColor,
             x.Hotline,
             x.DisplayWithMarkup,
@@ -49,6 +51,25 @@ public class AgencyServices : IAgencyServices
         var response = new PagedResult<ResponseModel.AgencyResponseModel>(result, listResult.PageIndex, listResult.PageSize,
             listResult.TotalCount);
         return Result<PagedResult<ResponseModel.AgencyResponseModel>>.CreateResult("Get agencies success", 200, response);
+    }
+
+    public async Task<Result<ResponseModel.AgencyDetailResponseModel>> GetAllDetail(Guid agencyId)
+    {
+        var existingAgency =
+            await _agencyRepository.GetAllWithQuery(x => x.Id == agencyId && !x.IsDeleted).FirstOrDefaultAsync();
+        if (existingAgency == null)
+        {
+            return Result<ResponseModel.AgencyDetailResponseModel>.CreateResult("Agency not found", 404, null!);
+        }
+
+        var response = new ResponseModel.AgencyDetailResponseModel(
+            existingAgency.LogoUrl,
+            existingAgency.Hotline,
+            existingAgency.Email,
+            existingAgency.Address,
+            existingAgency.Name
+        );
+        return Result<ResponseModel.AgencyDetailResponseModel>.CreateResult("Get Agency Detail Success", 200, response);
     }
 
     public async Task<Result> CreateAgency(RequestModel.CreateAgencyReq request)

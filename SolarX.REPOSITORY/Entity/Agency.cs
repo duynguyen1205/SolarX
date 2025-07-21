@@ -4,13 +4,14 @@ namespace SolarX.REPOSITORY.Entity;
 
 public class Agency : BaseEntity<Guid>, IAuditableEntity
 {
+    public string Email { get; set; }
     public string Name { get; set; }
     public string Slug { get; set; }
     public string LogoUrl { get; set; }
     public string BannerUrl { get; set; }
     public string ThemeColor { get; set; }
     public string Hotline { get; set; }
-
+    public string Address { get; set; }
     public float MarkupPercent { get; set; }
     public bool DisplayWithMarkup { get; set; }
 

@@ -8,6 +8,7 @@ namespace SolarX.SERVICE.Abstractions.IAgencyServices;
 public interface IAgencyServices
 {
     Task<Result<PagedResult<ResponseModel.AgencyResponseModel>>> GetAllAgencies(string? searchTerm, int pageIndex, int pageSize);
+    Task<Result<ResponseModel.AgencyDetailResponseModel>> GetAllDetail(Guid agencyId);
     Task<Result> CreateAgency(RequestModel.CreateAgencyReq request);
     Task<Result> UpdateAgency(Guid agencyId, RequestModel.UpdateAgencyReq request);
     Task<Result> DeleteAgency(Guid agencyId);

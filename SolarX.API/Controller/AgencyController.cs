@@ -27,6 +27,14 @@ namespace SolarX.API.Controller
             return StatusCode(result.StatusCode, result);
         }
 
+        [HttpGet("detail")]
+        public async Task<IActionResult> GetAgenciesDetail()
+        {
+            var agencyId = (Guid)HttpContext.Items["AgencyId"]!;
+            var result = await _agencyServices.GetAllDetail(agencyId);
+            return StatusCode(result.StatusCode, result);
+        }
+
         [HttpPost]
         [Authorize(Roles = "SystemAdmin")]
         public async Task<IActionResult> CreateNewAgency([FromForm] RequestModel.CreateAgencyReq request)

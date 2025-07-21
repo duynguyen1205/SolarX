@@ -121,7 +121,9 @@ public class ApplicationDbContext : DbContext
             DisplayWithMarkup = false,
             CreatedAt = DateTimeOffset.Now,
             UpdateAt = DateTimeOffset.Now,
-            IsDeleted = false
+            IsDeleted = false,
+            Address = "42 Đô Đốc Long, Quận Bình Thạnh",
+            Email = "AdminSolar@gmail.com"
         };
 
         modelBuilder.Entity<Agency>().HasData(agency);
