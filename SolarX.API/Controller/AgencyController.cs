@@ -20,7 +20,6 @@ namespace SolarX.API.Controller
         }
 
         [HttpGet]
-        [Authorize(Roles = "SystemAdmin")]
         public async Task<IActionResult> GetAllAgencies(string? searchTerm, int pageIndex, int pageSize)
         {
             var result = await _agencyServices.GetAllAgencies(searchTerm, pageIndex, pageSize);
