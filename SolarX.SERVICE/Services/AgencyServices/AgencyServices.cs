@@ -225,6 +225,7 @@ public class AgencyServices : IAgencyServices
             existingAgency.DisplayWithMarkup = request.DisplayWithMarkup.Value;
         }
 
+        _agencyRepository.UpdateEntity(existingAgency);
         return Result.CreateResult("Update agency successfully", 200);
     }
 
