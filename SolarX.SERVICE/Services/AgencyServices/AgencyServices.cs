@@ -28,7 +28,7 @@ public class AgencyServices : IAgencyServices
         var query = _agencyRepository.GetAllWithQuery(x => !x.IsDeleted && x.Slug != "admin");
         if (!string.IsNullOrEmpty(searchTerm))
         {
-            query = query.Where(x => x.Name.Contains(searchTerm) || x.Hotline.Contains(searchTerm));
+            query = query.Where(x => x.Name.Contains(searchTerm) || x.Hotline.Contains(searchTerm) || x.Slug.Contains(searchTerm));
         }
 
         query = query.Include(x => x.DefaultWallet);
