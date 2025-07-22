@@ -3,6 +3,7 @@
 public static class ResponseModel
 {
     public record ProductResponse(
+        Guid CategoryId,
         Guid ProductId,
         string ProductName,
         string ProductDescription,

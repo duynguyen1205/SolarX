@@ -43,6 +43,7 @@ public class ProductServices : IProductServices
         }
 
         var response = new ResponseModel.ProductResponse(
+            product.CategoryId,
             productId,
             product.Name,
             product.Description,

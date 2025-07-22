@@ -34,7 +34,7 @@ public class CategoryServices : ICategoryServices
             x.Products.Select(y => new ResponseModel.ProductViewModel(
                 y.Id,
                 y.Name,
-                null
+                y.BasePrice
             )).ToList()
         )).ToList();
 
