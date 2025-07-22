@@ -8,6 +8,7 @@ public class Product : BaseEntity<Guid>, IAuditableEntity
     public string Description { get; set; }
     public decimal BasePrice { get; set; }
     public bool IsActive { get; set; }
+    public string Sku { get; set; }
     public Guid CategoryId { get; set; }
     public Category Category { get; set; }
 

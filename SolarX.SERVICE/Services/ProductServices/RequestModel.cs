@@ -18,8 +18,11 @@ public static class RequestModel
         [Range(0.01, double.MaxValue, ErrorMessage = "Base price must be greater than 0")]
         decimal BasePrice,
         [Required] IFormFileCollection Images,
-        [Required] bool IsActive,
-        string Specifications
+        [Required]
+        bool IsActive,
+        string Specifications,
+        [Required]
+        string Sku
     );
 
     public record ProductSpecification(

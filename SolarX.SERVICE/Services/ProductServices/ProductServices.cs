@@ -97,8 +97,8 @@ public class ProductServices : IProductServices
             Description = request.ProductDescription,
             BasePrice = request.BasePrice,
             CategoryId = request.CategoryId,
-            IsActive = request.IsActive
-
+            IsActive = request.IsActive,
+            Sku = request.Sku
         };
         _productRepository.AddEntity(newProduct);
         var listDeserializeObject = JsonConvert.DeserializeObject<List<RequestModel.ProductSpecification>>(request.Specifications)!;
