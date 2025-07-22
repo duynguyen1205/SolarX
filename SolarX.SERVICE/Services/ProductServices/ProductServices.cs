@@ -311,7 +311,7 @@ public class ProductServices : IProductServices
         var productSpecification = await _productSpecificationRepository.GetById(productSpecificationId);
         if (productSpecification == null || productSpecification.IsDeleted)
         {
-            return Result.CreateResult("Product specifiaction not found", 400);
+            return Result.CreateResult("Product specification not found", 400);
         }
 
         _productSpecificationRepository.RemoveEntity(productSpecification);

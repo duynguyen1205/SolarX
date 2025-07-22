@@ -46,6 +46,27 @@ namespace SolarX.API.Controller
             return StatusCode(result.StatusCode, result);
         }
 
+        [HttpPut("properties/{productSpecificationId:guid}")]
+        [Authorize(Roles = "SystemAdmin")]
+        public async Task<IActionResult> UpdateProductProperties(Guid productSpecificationId,
+            RequestModel.UpdateProductSpecificationRequest request)
+        {
+            var result = await _globalTransactionsBehaviors.ExecuteInTransactionAsync(async () =>
+                await _productServices.UpdateProductSpecification(productSpecificationId, request)
+            );
+            return StatusCode(result.StatusCode, result);
+        }
+
+        [HttpDelete("properties/{productSpecificationId:guid}")]
+        [Authorize(Roles = "SystemAdmin")]
+        public async Task<IActionResult> DeleteProductProperties(Guid productSpecificationId)
+        {
+            var result = await _globalTransactionsBehaviors.ExecuteInTransactionAsync(async () =>
+                await _productServices.DeleteProductSpecification(productSpecificationId)
+            );
+            return StatusCode(result.StatusCode, result);
+        }
+
         [HttpDelete("{productId:guid}")]
         [Authorize(Roles = "SystemAdmin")]
         public async Task<IActionResult> DeleteProduct(Guid productId)
