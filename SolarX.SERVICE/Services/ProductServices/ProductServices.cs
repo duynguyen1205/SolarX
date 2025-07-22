@@ -48,6 +48,7 @@ public class ProductServices : IProductServices
             product.Description,
             product.BasePrice,
             product.Category.Name,
+            product.Sku,
             product.Images.OrderBy(x => x.ImageIndex).Select(x => new ResponseModel.ProductImageResponse(
                 x.Id,
                 x.ImageIndex,

@@ -8,6 +8,7 @@ public static class ResponseModel
         string ProductDescription,
         decimal BasePrice,
         string CategoryName,
+        string Sku,
         List<ProductImageResponse> Images,
         List<ProductSpecificationResponse> Specifications,
         List<ProductReviewResponse> Reviews
