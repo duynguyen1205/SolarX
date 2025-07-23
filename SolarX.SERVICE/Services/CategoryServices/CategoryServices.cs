@@ -23,7 +23,7 @@ public class CategoryServices : ICategoryServices
 
         if (!string.IsNullOrEmpty(searchTerm))
         {
-            query = query.Where(x => x.Name.Contains(searchTerm));
+            query = query.Where(x => x.Name.Contains(searchTerm) || x.Products.Any(p => p.Name.Contains(searchTerm)));
         }
 
         var listResult = await PagedResult<Category>.CreateAsync(query, pageIndex, pageSize);
