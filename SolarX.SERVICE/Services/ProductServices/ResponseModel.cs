@@ -15,6 +15,16 @@ public static class ResponseModel
         List<ProductReviewResponse> Reviews
     );
 
+    public record GetAllProductResponse(
+        Guid ProductId,
+        string CategoryName,
+        string ProductName,
+        string ProductDescription,
+        decimal BasePrice,
+        string Sku,
+        bool IsActive
+    );
+
     public record ProductImageResponse(
         Guid ImageId,
         int ImageIndex,

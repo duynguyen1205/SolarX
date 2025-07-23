@@ -19,6 +19,13 @@ namespace SolarX.API.Controller
             _globalTransactionsBehaviors = globalTransactionsBehaviors;
         }
 
+        [HttpGet]
+        public async Task<IActionResult> GetAllProduct(string? searchTerm, int? pageIndex = 1, int? pageSize = 10)
+        {
+            var result = await _productServices.GetAllProducts(searchTerm, (int)pageIndex!, (int)pageSize!);
+            return StatusCode(result.StatusCode, result);
+        }
+
         [HttpGet("{productId:guid}")]
         public async Task<IActionResult> GetProductDetail(Guid productId)
         {

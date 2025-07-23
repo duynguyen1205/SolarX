@@ -27,6 +27,31 @@ public class ProductServices : IProductServices
         _productSpecificationRepository = productSpecificationRepository;
     }
 
+    public async Task<Result<PagedResult<ResponseModel.GetAllProductResponse>>> GetAllProducts(string? searchTerm, int pageIndex,
+        int pageSize)
+    {
+        var query = _productRepository.GetAllWithQuery(x => !x.IsDeleted);
+        query = query.Include(x => x.Category);
+        if (!string.IsNullOrEmpty(searchTerm))
+        {
+            query = query.Where(x => x.Name.Contains(searchTerm));
+        }
+
+        var listResult = await PagedResult<Product>.CreateAsync(query, pageIndex, pageSize);
+        var result = listResult.Items.Select(x => new ResponseModel.GetAllProductResponse(
+            x.Id,
+            x.Category.Name,
+            x.Name,
+            x.Description,
+            x.BasePrice,
+            x.Sku,
+            x.IsActive
+        )).ToList();
+        return Result<PagedResult<ResponseModel.GetAllProductResponse>>.CreateResult("Get all products success", 200,
+            new PagedResult<ResponseModel.GetAllProductResponse>(result, listResult.PageIndex, listResult.PageSize,
+                listResult.TotalCount));
+    }
+
     public async Task<Result<ResponseModel.ProductResponse?>> GetProductDetail(Guid productId)
     {
         var product = await _productRepository.GetAllWithQuery(x => x.Id == productId && !x.IsDeleted)
