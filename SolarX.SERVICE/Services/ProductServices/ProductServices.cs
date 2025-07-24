@@ -90,7 +90,8 @@ public class ProductServices : IProductServices
                 x.Comment,
                 x.Rating,
                 x.Customer.FullName
-            )).ToList()
+            )).ToList(),
+            product.DocumentUrl
         );
         return Result<ResponseModel.ProductResponse?>.CreateResult("Get product detail success", 200, response);
     }

@@ -12,7 +12,8 @@ public static class ResponseModel
         string Sku,
         List<ProductImageResponse> Images,
         List<ProductSpecificationResponse> Specifications,
-        List<ProductReviewResponse> Reviews
+        List<ProductReviewResponse> Reviews,
+        string? DocumentUrl
     );
 
     public record GetAllProductResponse(
