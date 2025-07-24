@@ -19,7 +19,10 @@ public class CategoryServices : ICategoryServices
         int pageSize)
     {
         var query = _categoryRepository.GetAllWithQuery(x => !x.IsDeleted);
-        query = query.Include(x => x.Products.Where(z => z.IsActive && !z.IsDeleted));
+        query = query.Include(x => x.Products.Where(z => z.IsActive && !z.IsDeleted))
+            .ThenInclude(x => x.Images.Where(z => !z.IsDeleted))
+            .Include(x => x.Products.Where(z => z.IsActive && !z.IsDeleted))
+            .ThenInclude(x => x.Specifications.Where(y => !x.IsDeleted));
 
         if (!string.IsNullOrEmpty(searchTerm))
         {
@@ -34,7 +37,16 @@ public class CategoryServices : ICategoryServices
             x.Products.Select(y => new ResponseModel.ProductViewModel(
                 y.Id,
                 y.Name,
-                y.BasePrice
+                y.Images.Select(z => new ResponseModel.ProductImage(
+                        z.Id,
+                        z.ImageUrl
+                    ))
+                    .ToList(),
+                y.Specifications.Select(z => new ResponseModel.ProductSpecification(
+                    z.Id,
+                    z.Key,
+                    z.Value
+                )).ToList()
             )).ToList()
         )).ToList();
 
@@ -58,7 +70,10 @@ public class CategoryServices : ICategoryServices
         }
 
         var query = _categoryRepository.GetAllWithQuery(x => x.Id == categoryId && !x.IsDeleted);
-        query = query.Include(x => x.Products.Where(z => z.IsActive && !z.IsDeleted));
+        query = query.Include(x => x.Products.Where(z => z.IsActive && !z.IsDeleted))
+            .ThenInclude(x => x.Images.Where(z => !z.IsDeleted))
+            .Include(x => x.Products.Where(z => z.IsActive && !z.IsDeleted))
+            .ThenInclude(x => x.Specifications.Where(y => !x.IsDeleted));
 
         if (!string.IsNullOrEmpty(searchTerm))
         {
@@ -74,7 +89,16 @@ public class CategoryServices : ICategoryServices
             x.Products.Select(y => new ResponseModel.ProductViewModel(
                 y.Id,
                 y.Name,
-                CalculateProductPrice(y.BasePrice, isMarkUp, markupPercent)
+                y.Images.Select(z => new ResponseModel.ProductImage(
+                        z.Id,
+                        z.ImageUrl
+                    ))
+                    .ToList(),
+                y.Specifications.Select(z => new ResponseModel.ProductSpecification(
+                    z.Id,
+                    z.Key,
+                    z.Value
+                )).ToList()
             )).ToList()
         )).ToList();
 
@@ -83,15 +107,15 @@ public class CategoryServices : ICategoryServices
         return Result<PagedResult<ResponseModel.CategoryResponseModel>>.CreateResult("Get categories detail success", 200, result);
     }
 
-    private static decimal CalculateProductPrice(decimal basePrice, bool isMarkUp, decimal markupPercent)
-    {
-        if (isMarkUp && markupPercent > 0)
-        {
-            return basePrice + (basePrice * markupPercent / 100);
-        }
-
-        return basePrice;
-    }
+    // private static decimal CalculateProductPrice(decimal basePrice, bool isMarkUp, decimal markupPercent)
+    // {
+    //     if (isMarkUp && markupPercent > 0)
+    //     {
+    //         return basePrice + (basePrice * markupPercent / 100);
+    //     }
+    //
+    //     return basePrice;
+    // }
 
     public async Task<Result> CreateCategory(RequestModel.CreateCategoryReq req)
     {
