@@ -22,7 +22,8 @@ public static class RequestModel
         bool IsActive,
         string Specifications,
         [Required]
-        string Sku
+        string Sku,
+        IFormFile? Document
     );
 
     public record ProductSpecification(
@@ -40,7 +41,8 @@ public static class RequestModel
         IFormFileCollection? Img,
         List<int>? IndexFile,
         Guid? CategoryId,
-        bool? IsActive
+        bool? IsActive,
+        IFormFile? Document
     );
 
     public record UpdateProductSpecificationRequest(

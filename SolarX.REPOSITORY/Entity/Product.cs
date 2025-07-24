@@ -12,6 +12,7 @@ public class Product : BaseEntity<Guid>, IAuditableEntity
     public Guid CategoryId { get; set; }
     public Category Category { get; set; }
 
+    public string? DocumentUrl { get; set; }
     public ICollection<ProductImage> Images { get; set; } = new List<ProductImage>();
     public ICollection<ProductSpecification> Specifications { get; set; } = new List<ProductSpecification>();
     public ICollection<Inventory> Inventories { get; set; }

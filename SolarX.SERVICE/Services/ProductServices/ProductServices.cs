@@ -116,6 +116,7 @@ public class ProductServices : IProductServices
             var url = _cloudinaryService.UploadFileAsync(x, "solar-images");
             return url;
         }).ToList();
+        string? documentUrl = null;
 
         var newProduct = new Product
         {
@@ -127,6 +128,13 @@ public class ProductServices : IProductServices
             IsActive = request.IsActive,
             Sku = request.Sku
         };
+        if (request.Document != null)
+        {
+            var fileAsync = await _cloudinaryService.UploadFileAsync(request.Document, $"{newProduct.Sku}-document");
+            documentUrl = fileAsync;
+        }
+
+        newProduct.DocumentUrl = documentUrl;
         _productRepository.AddEntity(newProduct);
         var listDeserializeObject = JsonConvert.DeserializeObject<List<RequestModel.ProductSpecification>>(request.Specifications)!;
 
@@ -195,6 +203,17 @@ public class ProductServices : IProductServices
         if (request.IsActive != null && product.IsActive != request.IsActive)
         {
             product.IsActive = (bool)request.IsActive;
+        }
+
+        if (request.Document != null)
+        {
+            if (product.DocumentUrl != null)
+            {
+                await _cloudinaryService.DeleteFile(product.DocumentUrl);
+            }
+
+            var fileAsync = await _cloudinaryService.UploadFileAsync(request.Document, $"{product.Sku}-document");
+            product.DocumentUrl = fileAsync;
         }
 
         switch (request.IndexFile)
