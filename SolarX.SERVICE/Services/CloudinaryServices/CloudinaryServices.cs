@@ -106,6 +106,19 @@ public class CloudinaryServices : ICloudinaryService
     }
 
 
+private static bool IsValidFile(IFormFile file)
+{
+    var allowedExtensions = new[] { 
+        // Image files
+        ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp",
+        // PDF files
+        ".pdf",
+        // Archive files
+        ".zip", ".rar", ".7z", ".tar", ".gz"
+    };
+    var fileExtension = Path.GetExtension(file.FileName).ToLowerInvariant();
+    return allowedExtensions.Contains(fileExtension);
+}
     private static bool IsValidImage(IFormFile file)
     {
         var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif" };
