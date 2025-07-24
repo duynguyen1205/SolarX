@@ -34,7 +34,6 @@ public static class RequestModel
     public record UpdateProductRequest(
         [StringLength(50, MinimumLength = 3, ErrorMessage = "Product name must be between 3 and 20 characters.")]
         string? ProductName,
-        [StringLength(50, MinimumLength = 3, ErrorMessage = "Product description must be between 3 and 20 characters.")]
         string? ProductDescription,
         [Range(0.01, double.MaxValue, ErrorMessage = "Base price must be greater than 0")]
         decimal? BasePrice,
