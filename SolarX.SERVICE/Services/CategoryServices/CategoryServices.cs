@@ -37,6 +37,7 @@ public class CategoryServices : ICategoryServices
             x.Products.Select(y => new ResponseModel.ProductViewModel(
                 y.Id,
                 y.Name,
+                y.DocumentUrl,
                 y.Images.Select(z => new ResponseModel.ProductImage(
                         z.Id,
                         z.ImageUrl
@@ -89,6 +90,7 @@ public class CategoryServices : ICategoryServices
             x.Products.Select(y => new ResponseModel.ProductViewModel(
                 y.Id,
                 y.Name,
+                y.DocumentUrl,
                 y.Images.Select(z => new ResponseModel.ProductImage(
                         z.Id,
                         z.ImageUrl

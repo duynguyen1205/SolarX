@@ -7,6 +7,7 @@ public static class ResponseModel
     public record ProductViewModel(
         Guid ProductId,
         string ProductName,
+        string? ProductDocumentUrl,
         List<ProductImage> ProductImages,
         List<ProductSpecification> ProductSpecifications
     );
