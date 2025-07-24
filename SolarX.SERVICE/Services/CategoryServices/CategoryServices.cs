@@ -22,7 +22,7 @@ public class CategoryServices : ICategoryServices
         query = query.Include(x => x.Products.Where(z => z.IsActive && !z.IsDeleted))
             .ThenInclude(x => x.Images.Where(z => !z.IsDeleted))
             .Include(x => x.Products.Where(z => z.IsActive && !z.IsDeleted))
-            .ThenInclude(x => x.Specifications.Where(y => !x.IsDeleted));
+            .ThenInclude(x => x.Specifications.Where(y => !y.IsDeleted));
 
         if (!string.IsNullOrEmpty(searchTerm))
         {
@@ -73,7 +73,7 @@ public class CategoryServices : ICategoryServices
         query = query.Include(x => x.Products.Where(z => z.IsActive && !z.IsDeleted))
             .ThenInclude(x => x.Images.Where(z => !z.IsDeleted))
             .Include(x => x.Products.Where(z => z.IsActive && !z.IsDeleted))
-            .ThenInclude(x => x.Specifications.Where(y => !x.IsDeleted));
+            .ThenInclude(x => x.Specifications.Where(y => !y.IsDeleted));
 
         if (!string.IsNullOrEmpty(searchTerm))
         {
