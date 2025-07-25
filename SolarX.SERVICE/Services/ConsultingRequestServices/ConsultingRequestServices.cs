@@ -1,6 +1,8 @@
-﻿using SolarX.REPOSITORY.Abstractions;
+﻿using CloudinaryDotNet;
+using SolarX.REPOSITORY.Abstractions;
 using SolarX.REPOSITORY.Entity;
 using SolarX.REPOSITORY.Enum;
+using SolarX.SERVICE.Abstractions.ICloudinaryService;
 using SolarX.SERVICE.Abstractions.IConsultingRequestServices;
 using SolarX.SERVICE.Services.Base;
 
@@ -9,14 +11,19 @@ namespace SolarX.SERVICE.Services.ConsultingRequestServices;
 public class ConsultingRequestServices : IConsultingRequestServices
 {
     private readonly IBaseRepository<ConsultingRequest, Guid> _consultingRequestRepository;
+    private readonly ICloudinaryService _cloudinaryService;
 
-    public ConsultingRequestServices(IBaseRepository<ConsultingRequest, Guid> consultingRequestRepository)
+    public ConsultingRequestServices(IBaseRepository<ConsultingRequest, Guid> consultingRequestRepository,
+        ICloudinaryService cloudinaryService)
     {
         _consultingRequestRepository = consultingRequestRepository;
+        _cloudinaryService = cloudinaryService;
     }
 
-    public Task<Result> CreateConsultingRequest(Guid agencyId, RequestModel.CreateConsultingRequest request)
+    public async Task<Result> CreateConsultingRequest(Guid agencyId, RequestModel.CreateConsultingRequest request)
     {
+
+        var imgUrl = await _cloudinaryService.UploadFileAsync(request.Image, $"{agencyId}/consulting");
         var consulting = new ConsultingRequest
         {
             Id = Guid.NewGuid(),
@@ -26,10 +33,17 @@ public class ConsultingRequestServices : IConsultingRequestServices
             FullName = request.FullName,
             PhoneNumber = request.PhoneNumber,
             Message = request.Note,
-            RequestType = request.Type
+            RequestType = request.Type,
+            Length = request.Length,
+            Width = request.Width,
+            Slope = request.Slope,
+            AverageUsageLast3Months = request.AverageUsageLast3Months,
+            UsageTime = request.UsageTime,
+            MainPurpose = request.MainPurpose,
+            ImgUrl = imgUrl
         };
         _consultingRequestRepository.AddEntity(consulting);
-        return Task.FromResult(Result.CreateResult("Create consulting request success", 201));
+        return Result.CreateResult("Create consulting request success", 201);
     }
 
     public async Task<Result> UpdateConsultingRequestStatus(Guid agencyId, Guid consultingId, ConsultingRequestStatus status)

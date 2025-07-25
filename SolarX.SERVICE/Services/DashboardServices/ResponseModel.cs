@@ -62,5 +62,15 @@ public static class ResponseModel
         int TotalProducts
     );
 
+    public record MonthlyRevenueResponseModel(
+        int Year,
+        List<MonthRevenueItem> MonthlyRevenues
+    );
+
+    public record MonthRevenueItem(
+        int Month,
+        string MonthName,
+        decimal Revenue
+    );
 
 }

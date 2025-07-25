@@ -98,7 +98,18 @@ public class ApplicationDbContext : DbContext
             .Property(p => p.BasePrice)
             .HasPrecision(18, 2);
 
+        modelBuilder.Entity<ConsultingRequest>()
+            .Property(p => p.Length)
+            .HasPrecision(18, 2);
 
+        modelBuilder.Entity<ConsultingRequest>()
+            .Property(p => p.Width)
+            .HasPrecision(18, 2);
+
+        modelBuilder.Entity<ConsultingRequest>()
+            .Property(p => p.Slope)
+            .HasPrecision(18, 2);
+        
         modelBuilder.Entity<AgencyWallet>(entity =>
         {
             entity.Property(e => e.Balance).HasPrecision(18, 2);

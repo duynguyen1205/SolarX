@@ -81,6 +81,63 @@ public class DashboardServices : IDashboardServices
         return Result<ResponseModel.AdminDashboardResponseModel>.CreateResult("Admin Dashboard", 200, dashboard);
     }
 
+ 
+    public async Task<Result<ResponseModel.MonthlyRevenueResponseModel>> GetMonthlyRevenue(int month, int year)
+    {
+        var currentDate = DateTimeOffset.UtcNow;
+    
+        // Nếu không truyền tham số thì lấy tháng và năm hiện tại
+        var targetMonth = month == 0 ? currentDate.Month : month;
+        var targetYear = year == 0 ? currentDate.Year : year;
+
+        // Validate tháng
+        if (targetMonth is < 1 or > 12)
+        {
+            return Result<ResponseModel.MonthlyRevenueResponseModel>.CreateResult("Invalid month. Month must be between 1 and 12", 400, null);
+        }
+
+        var monthlyRevenues = new List<ResponseModel.MonthRevenueItem>();
+
+        // Lấy doanh thu từ tháng 1 đến tháng được chỉ định
+        for (int i = 1; i <= targetMonth; i++)
+        {
+            var startOfMonth = new DateTimeOffset(targetYear, i, 1, 0, 0, 0, TimeSpan.Zero);
+            var endOfMonth = startOfMonth.AddMonths(1);
+
+            var revenue = await _orderRepository
+                .GetAllWithQuery(o => !o.IsDeleted &&
+                                      o.CreatedAt >= startOfMonth &&
+                                      o.CreatedAt < endOfMonth &&
+                                      o.OrderStatus == OrderStatus.Completed)
+                .SumAsync(o => o.TotalAmount);
+
+            var monthName = GetMonthName(i);
+            monthlyRevenues.Add(new ResponseModel.MonthRevenueItem(i, monthName, revenue));
+        }
+
+        var response = new ResponseModel.MonthlyRevenueResponseModel(targetYear, monthlyRevenues);
+        return Result<ResponseModel.MonthlyRevenueResponseModel>.CreateResult($"Monthly Revenue from January to {GetMonthName(targetMonth)} {targetYear}", 200, response);
+    }
+
+    private static string GetMonthName(int month)
+    {
+        return month switch
+        {
+            1 => "Tháng 1",
+            2 => "Tháng 2",
+            3 => "Tháng 3",
+            4 => "Tháng 4",
+            5 => "Tháng 5",
+            6 => "Tháng 6",
+            7 => "Tháng 7",
+            8 => "Tháng 8",
+            9 => "Tháng 9",
+            10 => "Tháng 10",
+            11 => "Tháng 11",
+            12 => "Tháng 12",
+            _ => $"Tháng {month}"
+        };
+    }
 
     private async Task<ResponseModel.MonthlyOrdersResponseModel> GetMonthlyOrdersAsync(DateTimeOffset startOfMonth,
         DateTimeOffset endOfMonth)

@@ -23,6 +23,14 @@ namespace SolarX.API.Controller
             return StatusCode(result.StatusCode, result);
         }
 
+        [HttpGet("admin/monthly-revenue")]
+        [Authorize(Roles = "SystemAdmin")]
+        public async Task<IActionResult> GetMonthlyRevenue([FromQuery] int month = 0, [FromQuery] int year = 0)
+        {
+            var result = await _dashboardServices.GetMonthlyRevenue(month, year);
+            return StatusCode(result.StatusCode, result);
+        }
+
         [HttpGet("branch")]
         [Authorize]
         public async Task<IActionResult> GetBranchDashboard()
