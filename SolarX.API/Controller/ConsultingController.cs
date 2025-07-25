@@ -35,7 +35,7 @@ namespace SolarX.API.Controller
         }
 
         [HttpPost]
-        public async Task<IActionResult> CreateConsultingRequest(RequestModel.CreateConsultingRequest request)
+        public async Task<IActionResult> CreateConsultingRequest([FromForm] RequestModel.CreateConsultingRequest request)
         {
             var agencyId = (Guid)HttpContext.Items["AgencyId"]!;
             var result = await _globalTransactionsBehaviors.ExecuteInTransactionAsync(async () =>
