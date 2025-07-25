@@ -12,6 +12,7 @@ public interface IConsultingRequestServices
     Task<Result> DeleteConsultingRequest(Guid agencyId, Guid consultingRequestId);
 
     Task<Result<PagedResult<ResponseModel.ConsultingRequestResponseModel>>> GetAllConsultingRequest(Guid agencyId,
-        ConsultingRequestStatus? consultingRequestStatus, ConsultingRequestType? requestType, string? searchTerm,
+        ConsultingRequestStatus? consultingRequestStatus, //ConsultingRequestType? requestType, 
+        string? searchTerm,
         int pageIndex, int pageSize);
 }

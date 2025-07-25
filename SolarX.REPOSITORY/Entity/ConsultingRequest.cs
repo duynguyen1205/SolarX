@@ -22,7 +22,7 @@ public class ConsultingRequest : BaseEntity<Guid>, IAuditableEntity
     public string? Message { get; set; }
     public string ImgUrl { get; set; }
     public ConsultingRequestStatus Status { get; set; } = ConsultingRequestStatus.Pending;
-    public ConsultingRequestType RequestType { get; set; }
+    // public ConsultingRequestType RequestType { get; set; }
 
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset UpdateAt { get; set; }

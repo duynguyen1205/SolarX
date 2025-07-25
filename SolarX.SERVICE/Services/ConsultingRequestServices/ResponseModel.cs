@@ -7,7 +7,7 @@ public static class ResponseModel
         string FullName,
         string Area,
         string? Note,
-        string Type,
+        // string Type,
         string PhoneNumber,
         string Email,
         string Status,

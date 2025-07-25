@@ -33,7 +33,7 @@ public class ConsultingRequestServices : IConsultingRequestServices
             FullName = request.FullName,
             PhoneNumber = request.PhoneNumber,
             Message = request.Note,
-            RequestType = request.Type,
+            // RequestType = request.Type,
             Length = request.Length,
             Width = request.Width,
             Slope = request.Slope,
@@ -83,7 +83,7 @@ public class ConsultingRequestServices : IConsultingRequestServices
     }
 
     public async Task<Result<PagedResult<ResponseModel.ConsultingRequestResponseModel>>> GetAllConsultingRequest(Guid agencyId,
-        ConsultingRequestStatus? consultingRequestStatus, ConsultingRequestType? requestType,
+        ConsultingRequestStatus? consultingRequestStatus, //ConsultingRequestType? requestType,
         string? searchTerm, int pageIndex, int pageSize)
     {
         var query = _consultingRequestRepository.GetAllWithQuery(x => x.AgencyId == agencyId && !x.IsDeleted);
@@ -97,10 +97,10 @@ public class ConsultingRequestServices : IConsultingRequestServices
             query = query.Where(x => x.Email.Contains(searchTerm) || x.PhoneNumber.Contains(searchTerm));
         }
 
-        if (requestType != null)
-        {
-            query = query.Where(x => x.RequestType == requestType);
-        }
+        // if (requestType != null)
+        // {
+        //     query = query.Where(x => x.RequestType == requestType);
+        // }
 
         var resultList = await PagedResult<ConsultingRequest>.CreateAsync(query, pageIndex, pageSize);
         var result = resultList.Items.Select(x => new ResponseModel.ConsultingRequestResponseModel(
@@ -108,7 +108,7 @@ public class ConsultingRequestServices : IConsultingRequestServices
             x.FullName,
             x.Area,
             x.Message,
-            x.RequestType.ToString(),
+            // x.RequestType.ToString(),
             x.PhoneNumber,
             x.Email,
             x.Status.ToString(),

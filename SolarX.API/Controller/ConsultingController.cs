@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using SolarX.API.Behaviors;
 using SolarX.REPOSITORY.Enum;
@@ -25,12 +24,13 @@ namespace SolarX.API.Controller
         [HttpGet]
         [Authorize]
         public async Task<IActionResult> GetAllRequest(ConsultingRequestStatus? consultingRequestStatus,
-            ConsultingRequestType? requestType,
+            // ConsultingRequestType? requestType,
             string? searchTerm, int pageIndex, int pageSize)
         {
             var agencyId = User.FindFirst("AgencyId")?.Value!;
             var result = await _consultingRequestServices.GetAllConsultingRequest(Guid.Parse(agencyId), consultingRequestStatus,
-                requestType, searchTerm, pageIndex, pageSize);
+                // requestType, 
+                searchTerm, pageIndex, pageSize);
             return StatusCode(result.StatusCode, result);
         }
 
