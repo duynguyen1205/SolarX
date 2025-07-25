@@ -111,7 +111,14 @@ public class ConsultingRequestServices : IConsultingRequestServices
             x.RequestType.ToString(),
             x.PhoneNumber,
             x.Email,
-            x.Status.ToString()
+            x.Status.ToString(),
+            x.MainPurpose,
+            x.UsageTime,
+            x.AverageUsageLast3Months,
+            x.ImgUrl,
+            x.Length,
+            x.Width,
+            x.Slope
         )).ToList();
 
         var response = new PagedResult<ResponseModel.ConsultingRequestResponseModel>(result, resultList.PageIndex,

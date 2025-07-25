@@ -8,9 +8,16 @@ public static class ResponseModel
         string Area,
         string? Note,
         string Type,
-        string? PhoneNumber,
-        string? Email,
-        string Status
+        string PhoneNumber,
+        string Email,
+        string Status,
+        string MainPurpose,
+        string UsageTime,
+        double LastUsageLast3Months,
+        string ImageUrl,
+        decimal Length,
+        decimal Width,
+        decimal Slope
     );
 
 }
