@@ -10,6 +10,7 @@ using SolarX.SERVICE.Abstractions.IBlogServices;
 using SolarX.SERVICE.Abstractions.ICategoryServices;
 using SolarX.SERVICE.Abstractions.IConsultingRequestServices;
 using SolarX.SERVICE.Abstractions.IDashboardServices;
+using SolarX.SERVICE.Abstractions.IEmailServices;
 using SolarX.SERVICE.Abstractions.IFaqServices;
 using SolarX.SERVICE.Abstractions.IInventoryServices;
 using SolarX.SERVICE.Abstractions.IInventoryTransactionServices;
@@ -25,6 +26,7 @@ using SolarX.SERVICE.Services.CategoryServices;
 using SolarX.SERVICE.Services.CloudinaryServices;
 using SolarX.SERVICE.Services.ConsultingRequestServices;
 using SolarX.SERVICE.Services.DashboardServices;
+using SolarX.SERVICE.Services.EmailServices;
 using SolarX.SERVICE.Services.FaqServices;
 using SolarX.SERVICE.Services.InventoryServices;
 using SolarX.SERVICE.Services.InventoryTransactionServices;
@@ -71,7 +73,8 @@ builder.Services
     .AddTransient<IFaqServices, FaqServices>()
     .AddTransient<IBlogServices, BlogServices>()
     .AddTransient<IConsultingRequestServices, ConsultingRequestServices>()
-    .AddTransient<IDashboardServices, DashboardServices>();
+    .AddTransient<IDashboardServices, DashboardServices>()
+    .AddTransient<IEmailServices, EmailServices>();
 
 
 var app = builder.Build();

@@ -1,10 +1,13 @@
 ﻿using System.Text.Json;
+using Microsoft.EntityFrameworkCore;
 using SolarX.REPOSITORY.Abstractions;
 using SolarX.REPOSITORY.Entity;
 using SolarX.REPOSITORY.Enum;
 using SolarX.SERVICE.Abstractions.ICloudinaryService;
 using SolarX.SERVICE.Abstractions.IConsultingRequestServices;
+using SolarX.SERVICE.Abstractions.IEmailServices;
 using SolarX.SERVICE.Services.Base;
+using SolarX.SERVICE.Services.EmailServices;
 
 namespace SolarX.SERVICE.Services.ConsultingRequestServices;
 
@@ -12,22 +15,34 @@ public class ConsultingRequestServices : IConsultingRequestServices
 {
     private readonly IBaseRepository<ConsultingRequest, Guid> _consultingRequestRepository;
     private readonly ICloudinaryService _cloudinaryService;
+    private readonly IBaseRepository<Agency, Guid> _agencyServices;
+    private readonly IEmailServices _emailServices;
 
     public ConsultingRequestServices(IBaseRepository<ConsultingRequest, Guid> consultingRequestRepository,
-        ICloudinaryService cloudinaryService)
+        ICloudinaryService cloudinaryService, IBaseRepository<Agency, Guid> agencyServices, IEmailServices emailServices)
     {
         _consultingRequestRepository = consultingRequestRepository;
         _cloudinaryService = cloudinaryService;
+        _agencyServices = agencyServices;
+        _emailServices = emailServices;
     }
 
     public async Task<Result> CreateConsultingRequest(Guid agencyId, RequestModel.CreateConsultingRequest request)
     {
+        var agencyAdmin = _agencyServices.GetAllWithQuery(x => x.Id == agencyId && !x.IsDeleted)
+            .Include(x => x.Users).FirstOrDefault();
+        if (agencyAdmin == null)
+        {
+            return Result.CreateResult("Agency not found", 404);
+        }
 
+        var user = agencyAdmin.Users.FirstOrDefault(x => x.Role is Role.AgencyAdmin or Role.SystemAdmin)!;
         var taskUrl = request.Images.Select(x =>
         {
             var url = _cloudinaryService.UploadFileAsync(x, $"{agencyId}/consulting");
             return url;
         }).ToList();
+
         var result = await Task.WhenAll(taskUrl);
         var imageUrls = result.ToList();
         var consulting = new ConsultingRequest
@@ -49,6 +64,9 @@ public class ConsultingRequestServices : IConsultingRequestServices
             ImgUrl = JsonSerializer.Serialize(imageUrls)
         };
         _consultingRequestRepository.AddEntity(consulting);
+        await _emailServices.SendEmailAsync(
+            EmailExtensions.SendNewConsultingRequestToAdmin(user.Email, user.FullName, request.FullName, request.PhoneNumber,
+                request.Area), agencyAdmin.Name);
         return Result.CreateResult("Create consulting request success", 201);
     }
 

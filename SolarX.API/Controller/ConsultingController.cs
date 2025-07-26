@@ -25,12 +25,12 @@ namespace SolarX.API.Controller
         [Authorize]
         public async Task<IActionResult> GetAllRequest(ConsultingRequestStatus? consultingRequestStatus,
             // ConsultingRequestType? requestType,
-            string? searchTerm, int pageIndex, int pageSize)
+            string? searchTerm, int? pageIndex = 1, int? pageSize = 10)
         {
             var agencyId = User.FindFirst("AgencyId")?.Value!;
             var result = await _consultingRequestServices.GetAllConsultingRequest(Guid.Parse(agencyId), consultingRequestStatus,
                 // requestType, 
-                searchTerm, pageIndex, pageSize);
+                searchTerm, (int)pageIndex!, (int)pageSize!);
             return StatusCode(result.StatusCode, result);
         }
 

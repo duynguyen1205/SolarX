@@ -20,9 +20,9 @@ namespace SolarX.API.Controller
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAllAgencies(string? searchTerm, int pageIndex, int pageSize)
+        public async Task<IActionResult> GetAllAgencies(string? searchTerm, int? pageIndex = 1, int? pageSize = 10)
         {
-            var result = await _agencyServices.GetAllAgencies(searchTerm, pageIndex, pageSize);
+            var result = await _agencyServices.GetAllAgencies(searchTerm, (int)pageIndex!, (int)pageSize!);
             return StatusCode(result.StatusCode, result);
         }
 
