@@ -23,7 +23,7 @@ public class ConsultingRequestServices : IConsultingRequestServices
     public async Task<Result> CreateConsultingRequest(Guid agencyId, RequestModel.CreateConsultingRequest request)
     {
 
-        var taskUrl = request.Image.Select(x =>
+        var taskUrl = request.Images.Select(x =>
         {
             var url = _cloudinaryService.UploadFileAsync(x, $"{agencyId}/consulting");
             return url;
