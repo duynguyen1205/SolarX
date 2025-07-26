@@ -42,7 +42,7 @@ public static class RequestModel
         [Required]
         [StringLength(500, ErrorMessage = "UsageTime cannot exceed 500 characters")]
         string UsageTime,
-        IFormFile Image
+        IFormFileCollection Image
     );
 
 }

@@ -1,4 +1,4 @@
-﻿using CloudinaryDotNet;
+﻿using System.Text.Json;
 using SolarX.REPOSITORY.Abstractions;
 using SolarX.REPOSITORY.Entity;
 using SolarX.REPOSITORY.Enum;
@@ -23,7 +23,13 @@ public class ConsultingRequestServices : IConsultingRequestServices
     public async Task<Result> CreateConsultingRequest(Guid agencyId, RequestModel.CreateConsultingRequest request)
     {
 
-        var imgUrl = await _cloudinaryService.UploadFileAsync(request.Image, $"{agencyId}/consulting");
+        var taskUrl = request.Image.Select(x =>
+        {
+            var url = _cloudinaryService.UploadFileAsync(x, $"{agencyId}/consulting");
+            return url;
+        }).ToList();
+        var result = await Task.WhenAll(taskUrl);
+        var imageUrls = result.ToList();
         var consulting = new ConsultingRequest
         {
             Id = Guid.NewGuid(),
@@ -40,7 +46,7 @@ public class ConsultingRequestServices : IConsultingRequestServices
             AverageUsageLast3Months = request.AverageUsageLast3Months,
             UsageTime = request.UsageTime,
             MainPurpose = request.MainPurpose,
-            ImgUrl = imgUrl
+            ImgUrl = JsonSerializer.Serialize(imageUrls)
         };
         _consultingRequestRepository.AddEntity(consulting);
         return Result.CreateResult("Create consulting request success", 201);
@@ -115,7 +121,9 @@ public class ConsultingRequestServices : IConsultingRequestServices
             x.MainPurpose,
             x.UsageTime,
             x.AverageUsageLast3Months,
-            x.ImgUrl,
+            string.IsNullOrEmpty(x.ImgUrl)
+                ? []
+                : JsonSerializer.Deserialize<List<string>>(x.ImgUrl) ?? [],
             x.Length,
             x.Width,
             x.Slope
@@ -127,4 +135,6 @@ public class ConsultingRequestServices : IConsultingRequestServices
         return Result<PagedResult<ResponseModel.ConsultingRequestResponseModel>>.CreateResult("Get consulting request success",
             200, response);
     }
+
+
 }

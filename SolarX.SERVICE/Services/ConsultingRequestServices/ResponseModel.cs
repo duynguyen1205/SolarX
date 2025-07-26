@@ -14,7 +14,7 @@ public static class ResponseModel
         string MainPurpose,
         string UsageTime,
         double LastUsageLast3Months,
-        string ImageUrl,
+        List<string> ImageUrl,
         decimal Length,
         decimal Width,
         decimal Slope
