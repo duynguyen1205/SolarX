@@ -15,8 +15,8 @@ public static class RequestModel
         string Area,
         [StringLength(500, ErrorMessage = "Note cannot exceed 500 characters")]
         string? Note,
-        [Required(ErrorMessage = "Request type is required")]
-        ConsultingRequestType Type,
+        // [Required(ErrorMessage = "Request type is required")]
+        // ConsultingRequestType Type,
         [Required]
         [RegularExpression(@"^(0[3|5|7|8|9])\d{8}$", ErrorMessage = "Invalid phone number format.")]
         string PhoneNumber,

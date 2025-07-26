@@ -135,6 +135,4 @@ public class ConsultingRequestServices : IConsultingRequestServices
         return Result<PagedResult<ResponseModel.ConsultingRequestResponseModel>>.CreateResult("Get consulting request success",
             200, response);
     }
-
-
 }
