@@ -9,10 +9,9 @@ public static class RequestModel
         [Required]
         Guid CategoryId,
         [Required]
-        [StringLength(50, MinimumLength = 3, ErrorMessage = "Product name must be between 3 and 20 characters.")]
+        [StringLength(200, MinimumLength = 3, ErrorMessage = "Product name must be between 3 and 200 characters.")]
         string ProductName,
         [Required]
-        [StringLength(500, MinimumLength = 3, ErrorMessage = "Product description must be between 3 and 500 characters.")]
         string ProductDescription,
         [Required]
         [Range(0.01, double.MaxValue, ErrorMessage = "Base price must be greater than 0")]
